@@ -1,0 +1,20 @@
+// Base
+@import 'base/vars';
+@import 'base/animations';
+@import 'base/reset';
+@import 'base/base';
+
+// Blocks
+// Menu
+@import 'blocks/menu-block/menu';
+
+//Chats
+@import 'blocks/chats-block/chats-block';
+
+//Chat interface
+@import 'blocks/chat-interface/chat-interface';
+
+// Modals
+@import 'modals/modals';
+//Profile settings
+@import 'modals/modal-profile-settings';
