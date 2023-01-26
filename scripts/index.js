@@ -1,6 +1,8 @@
 // Импорты
 import uniqid from 'uniqid';
 import { format, isToday } from 'date-fns';
+import 'emoji-picker-element';
+import insertTextAtCursor from 'insert-text-at-cursor';
 
 // Инициализация приложения
 
@@ -197,13 +199,13 @@ const empty_chat_warning = document.querySelector('.empty-warning');
 // Выбор чата
 
 const test_chat = document.querySelector('.chat');
+const chat_interface_block = document.querySelector('.chat-interface');
 
 test_chat.addEventListener('click', showThisChat);
 
 function showThisChat() {
   test_chat.classList.add('chat_active');
 
-  const chat_interface_block = document.querySelector('.chat-interface');
   const messages_list = document.querySelector(
     '.chat-interface__messages-block'
   );
@@ -216,3 +218,30 @@ function showThisChat() {
     empty_chat_warning.classList.remove('hidden');
   }
 }
+
+// Меню с емодзи
+
+const emoji_trigger = document.querySelector('.emoji-picker__show-btn');
+
+emoji_trigger.addEventListener('mouseover', getEmojiMenu);
+
+function getEmojiMenu() {
+  const emoji_menu = document.querySelector('.emoji-picker');
+
+  if (emoji_menu.classList.contains('hidden')) {
+    emoji_menu.classList.remove('hidden');
+  } else {
+    emoji_menu.addEventListener('mouseout', function () {
+      emoji_menu.classList.add('hidden');
+    });
+  }
+}
+
+document
+  .querySelector('emoji-picker')
+  .addEventListener('emoji-click', (event) => {
+    insertTextAtCursor(
+      document.getElementById('new_message_input'),
+      event.detail.unicode
+    );
+  });

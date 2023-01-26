@@ -53,7 +53,7 @@
 }
 
 .chat-interface__new-message-block {
-  width: 90%;
+  width: 1000px;
 
   height: 50%;
 
@@ -62,8 +62,11 @@
 
   box-shadow: 0px 0px 10px -2px $gray;
 
+  display: flex;
+  align-items: center;
+
   input[type='text'] {
-    width: 100%;
+    width: 95%;
     height: 100%;
 
     border-radius: 15px;
@@ -77,7 +80,33 @@
     outline: none;
   }
 
+  button {
+    width: 25px;
+    height: 25px;
+
+    position: relative;
+  }
+
   input[type='submit'] {
     display: none;
+  }
+}
+
+.emoji-picker {
+  position: absolute;
+
+  right: 0;
+  bottom: 35px;
+}
+
+.emoji-picker__show-btn {
+  background: none;
+  border: none;
+
+  background: url(/styles/img/smile.svg);
+  background-size: cover;
+
+  &:hover {
+    cursor: pointer;
   }
 }

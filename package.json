@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "date-fns": "^2.29.3",
+    "emoji-picker-element": "^1.15.1",
+    "insert-text-at-cursor": "^0.3.0",
     "uniqid": "^5.4.0"
   },
   "devDependencies": {
