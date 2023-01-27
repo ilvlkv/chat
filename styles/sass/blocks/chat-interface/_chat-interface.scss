@@ -1,5 +1,6 @@
 // Elements
 @import './message';
+@import './hello-message';
 
 .chat-interface {
   height: 100%;
@@ -9,10 +10,13 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+
+  background: url('https://img.freepik.com/free-vector/white-abstract-background_23-2148810113.jpg?w=1380&t=st=1674802823~exp=1674803423~hmac=e46d91c3b81557c4e13b6f4416219e5448b7b34910b3e3e72c30a0df65bdf0f9');
+  background-size: cover;
 }
 
 .chat-interface__messages-block {
-  width: 90%;
+  width: 100%;
   height: 100%;
 
   display: flex;
@@ -27,6 +31,8 @@
   &::-webkit-scrollbar {
     width: 0;
   }
+
+  padding: 0 5% 30px 5%;
 }
 
 .empty-warning {
@@ -40,7 +46,7 @@
   font-size: 18px;
   font-style: italic;
 
-  color: $dark-gray;
+  color: $black;
 }
 
 .chat-interface__new-message-container {
@@ -50,6 +56,29 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
+  position: relative;
+
+  z-index: 1;
+
+  &::before {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    content: '';
+    z-index: -1;
+
+    background-color: $black;
+
+    opacity: 75%;
+  }
 }
 
 .chat-interface__new-message-block {
@@ -58,12 +87,15 @@
   height: 50%;
 
   border-radius: 15px;
-  border: 2px solid $gray;
 
-  box-shadow: 0px 0px 10px -2px $gray;
+  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px,
+    rgba(0, 0, 0, 0.07) 0px 4px 8px, rgba(0, 0, 0, 0.07) 0px 8px 16px,
+    rgba(0, 0, 0, 0.07) 0px 16px 32px, rgba(0, 0, 0, 0.07) 0px 32px 64px;
 
   display: flex;
   align-items: center;
+
+  background-color: $white;
 
   input[type='text'] {
     width: 95%;
@@ -97,13 +129,15 @@
 
   right: 0;
   bottom: 35px;
+
+  z-index: 2;
 }
 
 .emoji-picker__show-btn {
   background: none;
   border: none;
 
-  background: url(/styles/img/smile.svg);
+  background-image: url(/styles/img/smile.svg);
   background-size: cover;
 
   &:hover {

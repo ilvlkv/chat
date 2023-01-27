@@ -1,5 +1,6 @@
 @keyframes scale-in-hor-left {
   0% {
+    width: 0;
     -webkit-transform: scaleX(0);
     transform: scaleX(0);
     -webkit-transform-origin: 0% 0%;
@@ -7,6 +8,7 @@
     opacity: 1;
   }
   100% {
+    width: 30%;
     -webkit-transform: scaleX(1);
     transform: scaleX(1);
     -webkit-transform-origin: 0% 0%;
@@ -17,13 +19,15 @@
 
 @keyframes scale-out-hor-left {
   0% {
-    -webkit-transform: scaleX(1);
+    width: 30%;
+    transform: scaleX(1);
     transform: scaleX(1);
     -webkit-transform-origin: 0 0;
     transform-origin: 0 0;
     opacity: 1;
   }
   100% {
+    width: 0;
     -webkit-transform: scaleX(0);
     transform: scaleX(0);
     -webkit-transform-origin: 0 0;

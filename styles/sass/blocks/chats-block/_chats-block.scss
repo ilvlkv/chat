@@ -10,6 +10,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  z-index: 3;
 }
 
 .chats-block__search {
@@ -46,6 +48,34 @@
 
 .chats-block__search-submit {
   display: none;
+}
+
+.chats-block__new-chat-btn {
+  height: 25px;
+  width: 95%;
+
+  background-color: $light-gray;
+
+  border: none;
+  border-radius: 15px;
+
+  margin-top: 15px;
+
+  font-family: inherit;
+  font-size: 14px;
+  color: $dark-gray;
+
+  transition: 300ms;
+
+  &:hover {
+    background-color: $gray;
+    color: $white;
+
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px,
+      rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
+
+    cursor: pointer;
+  }
 }
 
 // Mods

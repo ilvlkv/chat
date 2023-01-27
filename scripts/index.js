@@ -7,12 +7,20 @@ import insertTextAtCursor from 'insert-text-at-cursor';
 // Инициализация приложения
 
 const me = uniqid();
+const my_name = 'Ilya Volkov';
 const my_picture = 'https://www.hallmarktour.com/img/profile-img.jpg';
+const hello_message = document.querySelector('.hello-message');
 
-window.addEventListener('load', function () {
+window.addEventListener('load', function init() {
   const profile_picture = document.querySelector('.menu__profile-link img');
 
   profile_picture.setAttribute('src', my_picture);
+
+  hello_message.innerHTML = `Здравствуйте, ${my_name}! Чтобы начать общение выберите или создайте чат в
+  меню :)`;
+  hello_message.classList.remove('hidden');
+
+  window.removeEventListener('load', init);
 });
 
 // Всплывающее меню
@@ -25,6 +33,10 @@ function getChatsMenu() {
   const menu_condition = menu_block.classList;
   const bar_block = document.querySelector('.menu');
   const block_out = document.querySelector('.chat-interface');
+
+  if (!hello_message.classList.contains('hidden')) {
+    hello_message.classList.add('hidden');
+  }
 
   if (menu_condition.contains('chats-block_hidden')) {
     setTimeout(() => {
@@ -60,35 +72,131 @@ function getChatsMenu() {
 const modal_overlay = document.querySelector('.modals');
 
 const profile_settings_trigger = document.querySelector('.menu__profile-link');
-const profile_settings_modal = document.querySelector(
-  '.modal__profile-setting'
-);
+const profile_settings_modal = document.querySelector('.profile-setting');
 
 profile_settings_trigger.addEventListener('click', showProfileSettingsModal);
 
-function showProfileSettingsModal() {
+function showModalsOverlay(exit_event, hide_on_overlay_click) {
   const modals_overlay_condition = modal_overlay.classList;
-  const profile_settings_condition = profile_settings_modal.classList;
 
-  if (modals_overlay_condition.contains('modals_hidden')) {
+  if (modals_overlay_condition.contains('hidden')) {
     setTimeout(() => {
       modals_overlay_condition.remove('modals_entrance');
     }, 500);
-    modals_overlay_condition.remove('modals_hidden');
+    modals_overlay_condition.remove('hidden');
+
     modals_overlay_condition.add('modals_entrance');
 
-    modal_overlay.addEventListener('click', hideProfileSettingsModal);
+    if (hide_on_overlay_click === true) {
+      modal_overlay.addEventListener('click', exit_event);
+    }
   }
 }
 
-function hideProfileSettingsModal() {
+function hideModalsOverlay(exit_event) {
   const modals_overlay_condition = modal_overlay.classList;
 
   setTimeout(() => {
-    modals_overlay_condition.add('modals_hidden');
+    modals_overlay_condition.add('hidden');
     modals_overlay_condition.remove('modals_exit');
   }, 500);
   modals_overlay_condition.add('modals_exit');
+
+  modal_overlay.removeEventListener('click', exit_event);
+}
+
+// Модальное окно с настройками профиля
+
+function showProfileSettingsModal() {
+  const profile_settings_condition = profile_settings_modal.classList;
+
+  if (profile_settings_condition.contains('hidden')) {
+    setTimeout(() => {
+      profile_settings_condition.remove('modals_entrance');
+    }, 500);
+
+    showModalsOverlay(hideProfileSettingsModal, true);
+
+    profile_settings_condition.remove('hidden');
+
+    profile_settings_condition.add('modals_entrance');
+  }
+}
+
+function hideProfileSettingsModal(event) {
+  const profile_settings_condition = profile_settings_modal.classList;
+
+  if (event.target === modal_overlay) {
+    setTimeout(() => {
+      profile_settings_condition.add('hidden');
+      profile_settings_condition.remove('modals_exit');
+    }, 500);
+
+    hideModalsOverlay(hideProfileSettingsModal);
+
+    profile_settings_condition.add('modals_exit');
+  } else {
+    return;
+  }
+}
+
+// Авторизация
+
+const authorization_modal = document.querySelector('.authorization');
+const authorization_email_submit = document.getElementById(
+  'authorization_email_submit'
+);
+
+// window.addEventListener('load', showAuthorizationModal);
+
+function showAuthorizationModal() {
+  const authorization_condition = authorization_modal.classList;
+  if (authorization_condition.contains('hidden')) {
+    setTimeout(() => {
+      authorization_condition.remove('modals_entrance');
+    }, 500);
+
+    showModalsOverlay(hideAuthorizationModal);
+
+    authorization_condition.remove('hidden');
+
+    authorization_condition.add('modals_entrance');
+  }
+}
+
+function hideAuthorizationModal() {}
+
+authorization_email_submit.addEventListener('click', sendTokenRequestByEmail);
+
+async function sendTokenRequestByEmail() {
+  const url = 'https://edu.strada.one/api/user';
+  const email = document.getElementById('authorization_email').value;
+
+  const user_email = {
+    email: email,
+  };
+
+  let responce = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+    body: JSON.stringify(user_email),
+  });
+
+  if (responce.ok === true) {
+    const token_setter_condition =
+      document.getElementById('token_setter').classList;
+
+    token_setter_condition.remove('hidden');
+    token_setter_condition.add('modals_entrance');
+
+    setTimeout(() => {
+      token_setter_condition.remove('modals_entrance');
+    }, 500);
+  } else {
+    alert(`${responce.status}: Bad request`);
+  }
 }
 
 // Создание нового сообщения

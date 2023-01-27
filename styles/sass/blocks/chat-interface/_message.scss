@@ -23,7 +23,7 @@
 }
 
 .message__author-name {
-  color: $gray;
+  color: $black;
 
   margin-left: 5px;
 }
@@ -32,9 +32,33 @@
   width: 500px;
   min-height: 50px;
 
-  background-color: $light-gray;
-
   border-radius: 10px;
+  box-shadow: $gray 0px 25px 50px -12px;
+
+  position: relative;
+  z-index: 1;
+
+  &::before {
+    position: absolute;
+
+    border-radius: 10px;
+
+    opacity: 80%;
+
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+
+    width: 100%;
+    height: 100%;
+
+    content: '';
+
+    background-color: $white;
+
+    z-index: -1;
+  }
 }
 
 .message__text {
@@ -42,6 +66,10 @@
   width: 90%;
 
   padding: 10px;
+
+  color: $black;
+
+  font-size: 15px;
 }
 
 .message__date {
@@ -59,12 +87,11 @@
 .message_outgoing {
   align-items: flex-end;
 
-  .message__author-name {
-    color: $dark-gray;
-  }
-
   .message__block {
-    background-color: $gray;
+    z-index: 1;
+    &::before {
+      background-color: $gray;
+    }
   }
 
   .message__date {
