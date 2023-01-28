@@ -276,66 +276,97 @@ async function changeProfileName() {
   ).value;
 
   if (new_name_value) {
-    const new_name = { name: new_name_value };
-    const url = 'https://edu.strada.one/api/user';
-    const user_token = Cookies.get('token');
+    showModalConfirmation(
+      'profile-setting',
+      null,
+      async () => {
+        const new_name = { name: new_name_value };
+        const url = 'https://edu.strada.one/api/user';
+        const user_token = Cookies.get('token');
 
-    let request = await fetch(url, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${user_token}`,
-        'Content-Type': 'application/json;charset=utf-8',
+        let request = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${user_token}`,
+            'Content-Type': 'application/json;charset=utf-8',
+          },
+          body: JSON.stringify(new_name),
+        });
+
+        let responce = await request.json();
+
+        if (responce.message) {
+          change_profile_name_trigger.removeEventListener(
+            'click',
+            changeProfileName
+          );
+
+          setTimeout(() => {
+            change_profile_name_trigger.addEventListener(
+              'click',
+              changeProfileName
+            );
+          }, 2500);
+
+          if (responce.message === 'Name is too short. Minimum 2 symbols') {
+            showModalNotification(
+              'error',
+              'profile-setting',
+              `Имя должно быть больше 2 символов!`
+            );
+          } else {
+            showModalNotification(
+              'error',
+              'profile-setting',
+              `Неизвестная ошибка`
+            );
+          }
+
+          return false;
+        }
+
+        if (responce.name) {
+          change_profile_name_trigger.removeEventListener(
+            'click',
+            changeProfileName
+          );
+
+          setTimeout(() => {
+            change_profile_name_trigger.addEventListener(
+              'click',
+              changeProfileName
+            );
+          }, 2500);
+
+          showModalNotification(
+            'completed',
+            'profile-setting',
+            'Имя профиля успешно изменено'
+          );
+        }
       },
-      body: JSON.stringify(new_name),
-    });
-
-    let responce = await request.json();
-
-    if (responce.message) {
-      change_profile_name_trigger.removeEventListener(
-        'click',
-        changeProfileName
-      );
-
-      setTimeout(() => {
-        change_profile_name_trigger.addEventListener(
+      () => {
+        change_profile_name_trigger.removeEventListener(
           'click',
           changeProfileName
         );
-      }, 2500);
 
-      if (responce.message === 'Name is too short. Minimum 2 symbols') {
+        setTimeout(() => {
+          change_profile_name_trigger.addEventListener(
+            'click',
+            changeProfileName
+          );
+        }, 2500);
+
         showModalNotification(
           'error',
           'profile-setting',
-          `Имя должно быть больше 2 символов!`
+          'Вы отменили изменения'
         );
-      } else {
-        showModalNotification('error', 'profile-setting', `Неизвестная ошибка`);
+
+        return false;
       }
-
-      return false;
-    }
-
-    if (responce.name) {
-      change_profile_name_trigger.removeEventListener(
-        'click',
-        changeProfileName
-      );
-
-      setTimeout(() => {
-        change_profile_name_trigger.addEventListener(
-          'click',
-          changeProfileName
-        );
-      }, 2500);
-
-      showModalNotification(
-        'completed',
-        'profile-setting',
-        'Имя профиля успешно изменено'
-      );
-    }
+    );
   } else {
     change_profile_name_trigger.removeEventListener('click', changeProfileName);
 
