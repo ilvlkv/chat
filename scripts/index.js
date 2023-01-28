@@ -639,10 +639,46 @@ async function sendTokenRequestByEmail() {
   }
 }
 
+const already_have_token_btn = document.querySelector('.already-have-key');
+
+already_have_token_btn.addEventListener('click', showTokenInputField);
+
+function showTokenInputField() {
+  authorization_email_submit.removeEventListener(
+    'click',
+    sendTokenRequestByEmail
+  );
+  const email_form_block = document.getElementById('email_form_block');
+
+  email_form_block.classList.add('email-input_exit');
+  setTimeout(() => {
+    email_form_block.classList.remove('email-input_exit');
+    email_form_block.classList.add('hidden');
+  }, 500);
+
+  already_have_token_btn.classList.add('hidden');
+
+  const token_setter_condition =
+    document.getElementById('token_setter').classList;
+
+  token_setter_condition.remove('hidden');
+  token_setter_condition.add('modals_entrance');
+
+  setTimeout(() => {
+    token_setter_condition.remove('modals_entrance');
+    authorization_token_submit.addEventListener(
+      'click',
+      getAuthorizationByToken
+    );
+  }, 500);
+
+  already_have_token_btn.removeEventListener('click', showTokenInputField);
+}
+
 function getAuthorizationByToken() {
   const token_value = document.getElementById('authorization_token').value;
 
-  if (token_value) {
+  if (token_value && token_value.length > 50) {
     Cookies.set('token', token_value, { expires: 1 });
 
     showModalNotification(
@@ -670,7 +706,7 @@ function getAuthorizationByToken() {
       );
     }, 2500);
 
-    showModalNotification('error', 'authorization', 'Введите полученный токен');
+    showModalNotification('error', 'authorization', 'Введите корректный токен');
   }
 }
 

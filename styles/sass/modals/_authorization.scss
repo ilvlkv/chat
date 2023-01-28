@@ -37,3 +37,27 @@
     }
   }
 }
+
+.already-have-key {
+  width: 40%;
+  height: 30px;
+
+  background: none;
+  border: none;
+
+  margin-top: 5px;
+
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 200;
+  font-style: italic;
+
+  color: $black;
+
+  transition: 200ms;
+
+  &:hover {
+    color: $blue;
+    cursor: pointer;
+  }
+}

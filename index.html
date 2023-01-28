@@ -38,9 +38,9 @@
       <div class="modals hidden">
         <div class="authorization modal hidden">
           <h1 class="modal__name">Авторизация</h1>
-          <div class="modal__setter">
+          <div class="modal__setter" id="email_form_block">
             <p class="modal__setter-name">
-              Введите Ваш e-mail для продолжения:
+              Введите Ваш e-mail если еще не получали код для входа:
             </p>
             <form
               action=""
@@ -56,6 +56,8 @@
               />
             </form>
           </div>
+          <button class="already-have-key">У вас уже есть код?</button>
+
           <div class="modal__setter hidden" id="token_setter">
             <p class="modal__setter-name">Введите Ваш ключ для авторизации:</p>
             <form
@@ -277,9 +279,13 @@
           <div class="chat__content">
             <p class="chat__name">Strada test chat</p>
             <div class="chat__last-message">
-              <img src="" alt="" class="chat__last-message-author" />
-              <p class="chat__last-message-text"></p>
-              <p class="chat__last-message-date"></p>
+              <img
+                src="https://www.hallmarktour.com/img/profile-img.jpg"
+                alt=""
+                class="chat__last-message-author"
+              />
+              <p class="chat__last-message-text">-</p>
+              <p class="chat__last-message-date">-</p>
             </div>
           </div>
         </div>
