@@ -29,6 +29,14 @@
 }
 
 .menu__profile-link {
+  &:hover {
+    cursor: pointer;
+
+    box-shadow: 0px 0px 10px 0px $dark-gray;
+  }
+}
+
+.menu__profile-logo {
   width: 75px;
   height: 75px;
 
@@ -39,12 +47,6 @@
 
   box-shadow: 0px 0px 10px 0px $gray;
   transition: 200ms;
-
-  &:hover {
-    cursor: pointer;
-
-    box-shadow: 0px 0px 10px 0px $dark-gray;
-  }
 
   position: relative;
 

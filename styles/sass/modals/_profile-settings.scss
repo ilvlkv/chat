@@ -1,0 +1,15 @@
+.modal__setter-profile-img {
+  height: 150px !important;
+
+  .modal__setter-form {
+    div {
+      margin-top: 0;
+    }
+
+    input[type='text'] {
+      margin-left: 15px;
+
+      width: 75%;
+    }
+  }
+}

@@ -25,10 +25,17 @@
       </div>
     </div>
   </template>
+  <template id="modal_notification">
+    <div class="modal__notification">
+      <div class="modal__notification-content">
+        <div class="modal__notification-img"></div>
+        <p class="modal__notificaion-text"></p>
+      </div>
+    </div>
+  </template>
   <body>
     <div class="container">
       <div class="modals hidden">
-        <div class="modals__overlay"></div>
         <div class="authorization modal hidden">
           <h1 class="modal__name">Авторизация</h1>
           <div class="modal__setter">
@@ -57,13 +64,43 @@
               onsubmit="return false"
               autocomplete="off"
             >
-              <input type="text" />
-              <input type="submit" value="Авторизоваться" />
+              <input type="text" id="authorization_token" />
+              <input
+                type="submit"
+                value="Авторизоваться"
+                id="authorization_token_submit"
+              />
             </form>
+          </div>
+          <div class="modal-loader hidden" id="authorization_modal_loader">
+            <div></div>
+            <div></div>
+            <div></div>
           </div>
         </div>
         <div class="profile-setting modal hidden">
           <h1 class="modal__name">Настройки профиля</h1>
+          <div class="modal__setter modal__setter-profile-img">
+            <p class="modal__setter-name">
+              Изменение изображения профиля<br />
+            </p>
+            <form
+              action=""
+              class="modal__setter-form"
+              onclick="return false"
+              autocomplete="off"
+            >
+              <div class="menu__profile-logo">
+                <img src="" alt="" class="" id="change_profile_img-preview" />
+              </div>
+              <input
+                type="text"
+                placeholder="Введите URL изображения"
+                id="profile_img_url"
+              />
+              <input type="submit" value="" id="change_profile_img-trigger" />
+            </form>
+          </div>
           <div class="modal__setter">
             <p class="modal__setter-name">
               Изменение имени, отображаемого в чате
@@ -74,8 +111,12 @@
               onclick="return false"
               autocomplete="off"
             >
-              <input type="text" />
-              <input type="submit" value="" />
+              <input type="text" id="change_profile_new_name" />
+              <input
+                type="submit"
+                value=""
+                id="change_profile_new_name-trigger"
+              />
             </form>
           </div>
         </div>
@@ -92,7 +133,7 @@
             <div class="hamburger"></div
           ></label>
         </div>
-        <button class="menu__profile-link">
+        <button class="menu__profile-link menu__profile-logo">
           <img src="" alt="" />
         </button>
         <button class="menu__link">
