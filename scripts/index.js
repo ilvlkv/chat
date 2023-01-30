@@ -1,17 +1,19 @@
-// Импорты
+// Импорты(сторонние библиотеки)
 
-import { format, isToday, parseISO, formatISO, fromUnixTime } from 'date-fns';
+import { format, isToday, parseISO, formatISO } from 'date-fns';
 import 'emoji-picker-element';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import Cookies from 'js-cookie';
 
-// My modules
+// Импорты(мои модули)
+
+import { addClass, removeClass } from '../scripts/modules/class-changer';
 import {
+  showModal,
+  hideModal,
   showModalConfirmation,
   showModalNotification,
-} from '../scripts/modules/modal-notifications';
-import { addClass, removeClass } from '../scripts/modules/class-changer';
-import { showModal, hideModal } from '../scripts/modules/modals';
+} from '../scripts/modules/modals';
 // Инициализация приложения
 
 const me = {
@@ -337,8 +339,6 @@ async function changeProfileName() {
 }
 
 // Авторизация
-
-const authorization_modal = document.querySelector('.authorization');
 
 const authorization_email_submit = document.getElementById(
   'authorization_email_submit'
