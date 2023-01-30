@@ -73,3 +73,15 @@
 .chat_active {
   background-color: $light-gray;
 }
+
+// Resp
+
+@media (max-width: 2560px) {
+  .chat {
+    padding: 0 10px;
+  }
+
+  .chat__content {
+    margin-left: 5px;
+  }
+}

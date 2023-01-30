@@ -144,3 +144,33 @@
     cursor: pointer;
   }
 }
+
+// Resp
+
+@media (max-width: 2560px) {
+  .chat-interface__new-message-block {
+    width: 750px;
+
+    justify-content: space-evenly;
+
+    input[type='submit'] {
+      width: 25px;
+      height: 25px;
+
+      display: block;
+      background: none;
+      border: none;
+
+      background: url('/styles/img/send-msg.svg');
+      background-size: cover;
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    input[type='text'] {
+      width: 90%;
+    }
+  }
+}

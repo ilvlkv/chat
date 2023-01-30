@@ -9,6 +9,9 @@
   }
   100% {
     width: 30%;
+    @media (max-width: 2560px) {
+      width: 40% !important;
+    }
     -webkit-transform: scaleX(1);
     transform: scaleX(1);
     -webkit-transform-origin: 0% 0%;
@@ -27,6 +30,9 @@
   }
   100% {
     width: 30%;
+    @media (max-width: 2560px) {
+      width: 40% !important;
+    }
     -webkit-transform: scaleX(1);
     transform: scaleX(1);
     -webkit-transform-origin: 0% 0%;
@@ -565,6 +571,14 @@ body {
   background-color: #eeeeee;
 }
 
+@media (max-width: 2560px) {
+  .chat {
+    padding: 0 10px;
+  }
+  .chat__content {
+    margin-left: 5px;
+  }
+}
 .chats-block {
   width: 30%;
   height: 100%;
@@ -901,6 +915,29 @@ body {
   cursor: pointer;
 }
 
+@media (max-width: 2560px) {
+  .chat-interface__new-message-block {
+    width: 750px;
+    -webkit-box-pack: space-evenly;
+        -ms-flex-pack: space-evenly;
+            justify-content: space-evenly;
+  }
+  .chat-interface__new-message-block input[type=submit] {
+    width: 25px;
+    height: 25px;
+    display: block;
+    background: none;
+    border: none;
+    background: url("/styles/img/send-msg.svg");
+    background-size: cover;
+  }
+  .chat-interface__new-message-block input[type=submit]:hover {
+    cursor: pointer;
+  }
+  .chat-interface__new-message-block input[type=text] {
+    width: 90%;
+  }
+}
 .modal__setter-profile-img {
   height: 150px !important;
 }

@@ -9,6 +9,9 @@
   }
   100% {
     width: 30%;
+    @media (max-width: 2560px) {
+      width: 40% !important;
+    }
     -webkit-transform: scaleX(1);
     transform: scaleX(1);
     -webkit-transform-origin: 0% 0%;
