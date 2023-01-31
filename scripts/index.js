@@ -1,6 +1,14 @@
 // Импорты(сторонние библиотеки)
 
-import { format, isToday, parseISO, formatISO } from 'date-fns';
+import {
+  format,
+  isToday,
+  parseISO,
+  formatISO,
+  isYesterday,
+  isThisYear,
+  isThisWeek,
+} from 'date-fns';
 import 'emoji-picker-element';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import Cookies from 'js-cookie';
@@ -491,7 +499,7 @@ function getAuthorizationByToken() {
   }
 }
 
-// Создание нового сообщения
+// Получение и создание сообщений
 class Message {
   constructor(options) {
     (this.id = options.id),
@@ -503,7 +511,7 @@ class Message {
       (this.text = options.text);
   }
 
-  renderMessage(is_mine) {
+  renderMessage(is_mine, first_message_of_group) {
     const message_template = document.getElementById('message');
     const messages_block = document.querySelector(
       '.chat-interface__messages-block'
@@ -519,14 +527,58 @@ class Message {
     const this_message_text = this_message.querySelector('.message__text');
     const this_message_date = this_message.querySelector('.message__date');
 
+    let date = parseISO(this.date);
+
     this_message_author.innerHTML = this.author.name;
     this_message_text.innerHTML = this.text;
-    this_message_date.innerHTML = this.date;
+
+    this_message_date.innerHTML = format(date, 'kk:mm');
+
     this_message_author_img.setAttribute('src', this.author.picture);
 
     if (is_mine === true) {
       this_message.querySelector('.message').classList.add('message_outgoing');
       this_message_author.innerHTML = 'Вы';
+    }
+
+    if (first_message_of_group === true) {
+      const messages_group_template = document.getElementById('messages_group');
+
+      const label_block = messages_group_template.content.cloneNode(true);
+      const label_block_text = label_block.querySelector('p');
+
+      const target = format(date, 'dd-MM-yyyy');
+      const is_exist = messages_buffer.includes(target);
+
+      if (!is_exist) {
+        messages_buffer.push(target);
+
+        let label_date;
+
+        if (isToday(date) === true) {
+          label_date = 'Today';
+        } else {
+          if (isYesterday(date) === true) {
+            label_date = 'Yesterday';
+          } else {
+            if (isThisWeek(date) === true) {
+              label_date = format(date, 'EEEE');
+            } else {
+              if (isThisYear(date) === true) {
+                label_date = format(date, 'dd LLLL');
+              } else {
+                label_date = format(date, 'dd LLLL yyyy');
+              }
+            }
+          }
+        }
+
+        label_block_text.innerHTML = label_date;
+
+        setTimeout(() => {
+          messages_block.prepend(label_block);
+        }, 0);
+      }
     }
 
     setTimeout(() => {
@@ -546,10 +598,37 @@ class Message {
     );
 
     last_message_author_img.setAttribute('src', this.author.picture);
-    last_message_text.innerHTML = this.text;
-    last_message_date.innerHTML = this.date;
+    let text = this.text;
+    if (text.length > 10) {
+      text = `${text.slice(0, 10)}...`;
+    }
+
+    last_message_text.innerHTML = text;
+    let date = parseISO(this.date);
+    let formatted_date;
+    if (isToday(date) === true) {
+      formatted_date = format(date, 'kk:mm');
+    } else {
+      if (isYesterday(date) === true) {
+        formatted_date = `Yesterday, ${format(date, 'kk:mm')}`;
+      } else {
+        if (isThisWeek(date) === true) {
+          formatted_date = `${format(date, 'EEEE')},${format(date, 'kk:mm')}`;
+        } else {
+          if (isThisYear(date) === true) {
+            formatted_date = format(date, 'dd LLLL, kk:mm');
+          } else {
+            formatted_date = format(date, 'dd LLLL yyyy, kk:mm');
+          }
+        }
+      }
+    }
+
+    last_message_date.innerHTML = formatted_date;
   }
 }
+
+const messages_buffer = [];
 
 const new_message_input = document.getElementById('new_message_input');
 const new_message_submit = document.getElementById('new_message_submit');
@@ -562,13 +641,13 @@ async function createNewMessage() {
   const raw_date = Date.now();
 
   const date = formatISO(raw_date);
-  console.log(date);
+
   const arr = [
     {
       id: me.id,
       user: { email: me.email, name: me.name },
       text: new_message_Value,
-      updatedAt: date,
+      createdAt: date,
     },
   ];
 
@@ -591,16 +670,7 @@ async function recursive_render(message_array, message_number) {
     const text = current_elem.text;
     const email = current_elem.user.email;
 
-    let raw_date = current_elem.updatedAt;
-    raw_date = parseISO(raw_date);
-
-    let date;
-
-    if (isToday(raw_date) === true) {
-      date = format(raw_date, 'kk:mm');
-    } else {
-      date = format(raw_date, 'dd MMM kk:mm');
-    }
+    const date = current_elem.createdAt;
 
     const new_message = new Message({
       id: id,
@@ -610,18 +680,90 @@ async function recursive_render(message_array, message_number) {
     });
 
     if (email === me.email) {
-      new_message.renderMessage(true);
+      new_message.author.picture = me.picture;
+
+      if (message_number === 0) {
+        new_message.renderMessage(true, true);
+      } else {
+        new_message.renderMessage(true, false);
+      }
     } else {
-      new_message.renderMessage(false);
+      if (message_number === 0) {
+        new_message.renderMessage(false, true);
+      } else {
+        new_message.renderMessage(false, false);
+      }
     }
 
     if (message_number === message_array.length - 1) {
-      new_message.changeLastMessageOfChat();
+      new_message.changeLastMessageOfChat(true);
     }
 
     message_number += 1;
 
     return await recursive_render(message_array, message_number);
+  }
+}
+
+async function getMessageHistory(chat_name) {
+  if (chat_name === 'Strada test chat') {
+    const url = 'https://edu.strada.one/api/messages/';
+
+    let request = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${me.token}`,
+      },
+    });
+
+    const responce = await request.json();
+
+    const message_history = responce.messages.reverse();
+
+    if (!message_history.length) {
+      empty_chat_warning.classList.remove('hidden');
+    }
+    const sorted_array = groupMessagesByDate(message_history);
+
+    recursive_group_render(sorted_array);
+  }
+}
+
+function groupMessagesByDate(messages_array) {
+  let groups = [];
+
+  for (let element of messages_array) {
+    let existingGroups = groups.filter(
+      (group) => group.date == format(parseISO(element.createdAt), 'dd-MM-yyyy')
+    );
+    if (existingGroups.length > 0) {
+      existingGroups[0].messages.push(element);
+    } else {
+      let newGroup = {
+        date: format(parseISO(element.createdAt), 'dd-MM-yyyy'),
+        messages: [element],
+      };
+
+      groups.push(newGroup);
+    }
+  }
+  return groups;
+}
+
+async function recursive_group_render(group_array) {
+  if (Array.isArray(group_array)) {
+    group_array.forEach((item) => {
+      return recursive_group_render(item);
+    });
+  } else {
+    if (group_array) {
+      const group = group_array.messages;
+      const date = group_array.date;
+
+      return await recursive_render(group, 0, date);
+    }
+
+    return await recursive_group_render();
   }
 }
 
@@ -648,30 +790,6 @@ function showThisChat() {
   }
 
   getMessageHistory(chat_name);
-}
-
-async function getMessageHistory(chat_name) {
-  if (chat_name === 'Strada test chat') {
-    const url = 'https://edu.strada.one/api/messages/';
-
-    let request = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${me.token}`,
-      },
-    });
-
-    const responce = await request.json();
-
-    const message_history = responce.messages.reverse();
-
-    if (!message_history.length) {
-      empty_chat_warning.classList.remove('hidden');
-    }
-    console.log(message_history);
-
-    recursive_render(message_history, 0);
-  }
 }
 
 // Меню с емодзи
