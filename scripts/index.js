@@ -1,16 +1,35 @@
-// Импорты
+// Импорты(сторонние библиотеки)
 
-import { format, isToday } from 'date-fns';
+import {
+  format,
+  isToday,
+  parseISO,
+  formatISO,
+  isYesterday,
+  isThisYear,
+  isThisWeek,
+} from 'date-fns';
 import 'emoji-picker-element';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import Cookies from 'js-cookie';
 
+// Импорты(мои модули)
+
+import { addClass, removeClass } from '../scripts/modules/class-changer';
+import {
+  showModal,
+  hideModal,
+  showModalConfirmation,
+  showModalNotification,
+} from '../scripts/modules/modals';
 // Инициализация приложения
 
 const me = {
   id: null,
   name: null,
   picture: 'https://www.hallmarktour.com/img/profile-img.jpg',
+  token: null,
+  email: null,
 };
 
 async function initializeProfile() {
@@ -33,7 +52,10 @@ async function initializeProfile() {
 
     const result = await request.json();
 
-    (me.name = result.name), (me.id = result._id);
+    (me.name = result.name),
+      (me.id = result._id),
+      (me.token = user_token),
+      (me.email = result.email);
 
     if (profile_img) {
       me.picture = profile_img;
@@ -54,8 +76,10 @@ async function initializeProfile() {
     profile_picture.forEach((item) => {
       item.setAttribute('src', me.picture);
     });
+    const authorization_modal = document.querySelector('.authorization');
 
-    showAuthorizationModal();
+    showModal(authorization_modal, false);
+    // showAuthorizationModal();
   }
 }
 
@@ -108,78 +132,14 @@ function getChatsMenu() {
 
 // Модальные окна
 
-const modal_overlay = document.querySelector('.modals');
+// Модальное окно с настройками профиля
 
 const profile_settings_trigger = document.querySelector('.menu__profile-link');
 const profile_settings_modal = document.querySelector('.profile-setting');
 
-profile_settings_trigger.addEventListener('click', showProfileSettingsModal);
-
-function showModalsOverlay(exit_event, hide_on_overlay_click) {
-  const modals_overlay_condition = modal_overlay.classList;
-
-  if (modals_overlay_condition.contains('hidden')) {
-    setTimeout(() => {
-      modals_overlay_condition.remove('modals_entrance');
-    }, 500);
-    modals_overlay_condition.remove('hidden');
-
-    modals_overlay_condition.add('modals_entrance');
-
-    if (exit_event) {
-      if (hide_on_overlay_click === true) {
-        modal_overlay.addEventListener('click', exit_event);
-      }
-    }
-  }
-}
-
-function hideModalsOverlay(exit_event) {
-  const modals_overlay_condition = modal_overlay.classList;
-
-  setTimeout(() => {
-    modals_overlay_condition.add('hidden');
-    modals_overlay_condition.remove('modals_exit');
-  }, 500);
-  modals_overlay_condition.add('modals_exit');
-
-  modal_overlay.removeEventListener('click', exit_event);
-}
-
-// Модальное окно с настройками профиля
-
-function showProfileSettingsModal() {
-  const profile_settings_condition = profile_settings_modal.classList;
-
-  if (profile_settings_condition.contains('hidden')) {
-    setTimeout(() => {
-      profile_settings_condition.remove('modals_entrance');
-    }, 500);
-
-    showModalsOverlay(hideProfileSettingsModal, true);
-
-    profile_settings_condition.remove('hidden');
-
-    profile_settings_condition.add('modals_entrance');
-  }
-}
-
-function hideProfileSettingsModal(event) {
-  const profile_settings_condition = profile_settings_modal.classList;
-
-  if (event.target === modal_overlay) {
-    setTimeout(() => {
-      profile_settings_condition.add('hidden');
-      profile_settings_condition.remove('modals_exit');
-    }, 500);
-
-    hideModalsOverlay(hideProfileSettingsModal);
-
-    profile_settings_condition.add('modals_exit');
-  } else {
-    return;
-  }
-}
+profile_settings_trigger.addEventListener('click', () => {
+  showModal(profile_settings_modal, true);
+});
 
 // Настройки профиля
 
@@ -194,10 +154,13 @@ change_profile_img_trigger.addEventListener('click', changeProfileImg);
 change_profile_name_trigger.addEventListener('click', changeProfileName);
 
 function changeProfileImg() {
-  const img_url = document.getElementById('profile_img_url').value;
+  const img_url_node = document.getElementById('profile_img_url');
+  const img_url = img_url_node.value;
   const change_profile_img_preview = document.getElementById(
     'change_profile_img-preview'
   );
+
+  img_url_node.value = '';
 
   const reg =
     /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
@@ -271,9 +234,10 @@ function changeProfileImg() {
 }
 
 async function changeProfileName() {
-  const new_name_value = document.getElementById(
-    'change_profile_new_name'
-  ).value;
+  const new_name_node = document.getElementById('change_profile_new_name');
+  const new_name_value = new_name_node.value;
+
+  new_name_node.value = '';
 
   if (new_name_value) {
     showModalConfirmation(
@@ -382,193 +346,7 @@ async function changeProfileName() {
   }
 }
 
-// Уведомления в модальных окнах
-
-function showModalNotification(status, modal, notification_text) {
-  const notification_template = document.getElementById('modal_notification');
-  const modal_block = document.querySelector(`.${modal}`);
-
-  const this_notification = notification_template.content.cloneNode(true);
-  const this_notification_block = this_notification.querySelector(
-    '.modal__notification'
-  );
-  const this_notification_text = this_notification.querySelector(
-    '.modal__notificaion-text'
-  );
-
-  if (notification_text) {
-    if (status === 'error') {
-      this_notification_block.classList.add('modal__notification_error');
-
-      this_notification_text.innerHTML = `Ошибка: ${notification_text}`;
-
-      modal_block.append(this_notification_block);
-
-      this_notification_block.classList.add('notification_entrance');
-
-      setTimeout(() => {
-        this_notification_block.classList.remove('notification_entrance');
-      }, 200);
-
-      setTimeout(() => {
-        this_notification_block.classList.add('notification_exit');
-      }, 1500);
-
-      setTimeout(() => {
-        modal_block.removeChild(this_notification_block);
-      }, 2000);
-    } else {
-      this_notification_block.classList.add('modal__notification_completed');
-
-      this_notification_text.innerHTML = `${notification_text}`;
-
-      modal_block.append(this_notification_block);
-
-      this_notification_block.classList.add('notification_entrance');
-
-      setTimeout(() => {
-        this_notification_block.classList.remove('notification_entrance');
-      }, 200);
-
-      setTimeout(() => {
-        this_notification_block.classList.add('notification_exit');
-      }, 1500);
-
-      setTimeout(() => {
-        modal_block.removeChild(this_notification_block);
-      }, 2000);
-    }
-  } else {
-    if (status === 'error') {
-      this_notification_block.classList.add('modal__notification_error');
-
-      this_notification_text.innerHTML = `Ошибка: запрос не выполнен`;
-
-      modal_block.append(this_notification_block);
-
-      this_notification_block.classList.add('notification_entrance');
-
-      setTimeout(() => {
-        this_notification_block.classList.remove('notification_entrance');
-      }, 200);
-
-      setTimeout(() => {
-        this_notification_block.classList.add('notification_exit');
-      }, 1500);
-
-      setTimeout(() => {
-        modal_block.removeChild(this_notification_block);
-      }, 2000);
-    } else {
-      this_notification_block.classList.add('modal__notification_completed');
-
-      this_notification_text.innerHTML = `Успешно!`;
-
-      modal_block.append(this_notification_block);
-
-      this_notification_block.classList.add('notification_entrance');
-
-      setTimeout(() => {
-        this_notification_block.classList.remove('notification_entrance');
-      }, 200);
-
-      setTimeout(() => {
-        this_notification_block.classList.add('notification_exit');
-      }, 1500);
-
-      setTimeout(() => {
-        modal_block.removeChild(this_notification_block);
-      }, 2000);
-    }
-  }
-}
-
-function showModalConfirmation(
-  modal,
-  confirmation_text,
-  resolve_func,
-  reject_func
-) {
-  const notification_template = document.getElementById('modal_notification');
-  const modal_block = document.querySelector(`.${modal}`);
-
-  const this_notification = notification_template.content.cloneNode(true);
-  const this_notification_block = this_notification.querySelector(
-    '.modal__notification'
-  );
-  const this_notification_text = this_notification.querySelector(
-    '.modal__notificaion-text'
-  );
-
-  const buttons_block = document.createElement('div');
-  buttons_block.className = 'modal__notification-buttons-block';
-
-  const confirm_button = document.createElement('button');
-
-  confirm_button.className =
-    'modal__notification-btn modal__notification-btn_confirm';
-  confirm_button.addEventListener('click', function save() {
-    confirm_button.removeEventListener('click', save);
-
-    this_notification_block.classList.add('notification_exit');
-
-    setTimeout(() => {
-      modal_block.removeChild(this_notification_block);
-
-      resolve_func();
-    }, 500);
-  });
-
-  const cancel_button = document.createElement('button');
-  cancel_button.className =
-    'modal__notification-btn modal__notification-btn_cancel';
-  cancel_button.addEventListener('click', function cancel() {
-    cancel_button.removeEventListener('click', cancel);
-
-    this_notification_block.classList.add('notification_exit');
-
-    setTimeout(() => {
-      modal_block.removeChild(this_notification_block);
-
-      reject_func();
-    }, 500);
-  });
-
-  buttons_block.append(confirm_button);
-  buttons_block.append(cancel_button);
-
-  this_notification_block.append(buttons_block);
-
-  if (confirmation_text !== null) {
-    this_notification_block.classList.add('modal__notification_confirm');
-
-    this_notification_text.innerHTML = `${confirmation_text}`;
-
-    modal_block.append(this_notification_block);
-
-    this_notification_block.classList.add('notification_entrance');
-
-    setTimeout(() => {
-      this_notification_block.classList.remove('notification_entrance');
-    }, 200);
-  } else {
-    this_notification_block.classList.add('modal__notification_confirm');
-
-    this_notification_text.innerHTML = `Хотите подтвердить действие?`;
-
-    modal_block.append(this_notification_block);
-
-    this_notification_block.classList.add('notification_entrance');
-
-    setTimeout(() => {
-      this_notification_block.classList.remove('notification_entrance');
-    }, 200);
-  }
-}
-
 // Авторизация
-
-const authorization_modal = document.querySelector('.authorization');
 
 const authorization_email_submit = document.getElementById(
   'authorization_email_submit'
@@ -577,33 +355,6 @@ const authorization_email_submit = document.getElementById(
 const authorization_token_submit = document.getElementById(
   'authorization_token_submit'
 );
-
-function showAuthorizationModal() {
-  const authorization_condition = authorization_modal.classList;
-  if (authorization_condition.contains('hidden')) {
-    setTimeout(() => {
-      authorization_condition.remove('modals_entrance');
-    }, 500);
-
-    showModalsOverlay();
-
-    authorization_condition.remove('hidden');
-
-    authorization_condition.add('modals_entrance');
-  }
-}
-
-function hideAuthorizationModal() {
-  const authorization_modal_condition =
-    document.querySelector('.authorization').classList;
-
-  setTimeout(() => {
-    authorization_modal_condition.remove('modals_exit');
-    authorization_modal_condition.add('hidden');
-  }, 500);
-
-  authorization_modal_condition.add('modals_exit');
-}
 
 authorization_email_submit.addEventListener('click', sendTokenRequestByEmail);
 
@@ -615,7 +366,11 @@ async function sendTokenRequestByEmail() {
   const url = 'https://edu.strada.one/api/user';
   const reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 
-  const email_value = document.getElementById('authorization_email').value;
+  const email_value_node = document.getElementById('authorization_email');
+  const email_value = email_value_node.value;
+
+  email_value_node.value = '';
+
   const user_email = {
     email: email_value,
   };
@@ -707,7 +462,10 @@ function showTokenInputField() {
 }
 
 function getAuthorizationByToken() {
-  const token_value = document.getElementById('authorization_token').value;
+  const token_value_node = document.getElementById('authorization_token');
+  const token_value = token_value_node.value;
+
+  token_value_node.value = '';
 
   if (token_value && token_value.length > 50) {
     Cookies.set('token', token_value, { expires: 1 });
@@ -719,8 +477,8 @@ function getAuthorizationByToken() {
     );
 
     setTimeout(() => {
-      hideAuthorizationModal();
-      hideModalsOverlay(hideAuthorizationModal);
+      const authorization_modal = document.querySelector('.authorization');
+      hideModal(authorization_modal);
 
       initializeProfile();
     }, 2500);
@@ -741,9 +499,7 @@ function getAuthorizationByToken() {
   }
 }
 
-// Создание нового сообщения
-
-const message_storage = [];
+// Получение и создание сообщений
 class Message {
   constructor(options) {
     (this.id = options.id),
@@ -755,7 +511,7 @@ class Message {
       (this.text = options.text);
   }
 
-  renderMessage() {
+  renderMessage(is_mine, first_message_of_group) {
     const message_template = document.getElementById('message');
     const messages_block = document.querySelector(
       '.chat-interface__messages-block'
@@ -771,14 +527,58 @@ class Message {
     const this_message_text = this_message.querySelector('.message__text');
     const this_message_date = this_message.querySelector('.message__date');
 
+    let date = parseISO(this.date);
+
     this_message_author.innerHTML = this.author.name;
     this_message_text.innerHTML = this.text;
-    this_message_date.innerHTML = this.date;
+
+    this_message_date.innerHTML = format(date, 'kk:mm');
+
     this_message_author_img.setAttribute('src', this.author.picture);
 
-    if (this_message_author.textContent === me.name) {
+    if (is_mine === true) {
       this_message.querySelector('.message').classList.add('message_outgoing');
       this_message_author.innerHTML = 'Вы';
+    }
+
+    if (first_message_of_group === true) {
+      const messages_group_template = document.getElementById('messages_group');
+
+      const label_block = messages_group_template.content.cloneNode(true);
+      const label_block_text = label_block.querySelector('p');
+
+      const target = format(date, 'dd-MM-yyyy');
+      const is_exist = messages_buffer.includes(target);
+
+      if (!is_exist) {
+        messages_buffer.push(target);
+
+        let label_date;
+
+        if (isToday(date) === true) {
+          label_date = 'Today';
+        } else {
+          if (isYesterday(date) === true) {
+            label_date = 'Yesterday';
+          } else {
+            if (isThisWeek(date) === true) {
+              label_date = format(date, 'EEEE');
+            } else {
+              if (isThisYear(date) === true) {
+                label_date = format(date, 'dd LLLL');
+              } else {
+                label_date = format(date, 'dd LLLL yyyy');
+              }
+            }
+          }
+        }
+
+        label_block_text.innerHTML = label_date;
+
+        setTimeout(() => {
+          messages_block.prepend(label_block);
+        }, 0);
+      }
     }
 
     setTimeout(() => {
@@ -798,48 +598,173 @@ class Message {
     );
 
     last_message_author_img.setAttribute('src', this.author.picture);
-    last_message_text.innerHTML = this.text;
-    last_message_date.innerHTML = this.date;
+    let text = this.text;
+    if (text.length > 10) {
+      text = `${text.slice(0, 10)}...`;
+    }
+
+    last_message_text.innerHTML = text;
+    let date = parseISO(this.date);
+    let formatted_date;
+    if (isToday(date) === true) {
+      formatted_date = format(date, 'kk:mm');
+    } else {
+      if (isYesterday(date) === true) {
+        formatted_date = `Yesterday, ${format(date, 'kk:mm')}`;
+      } else {
+        if (isThisWeek(date) === true) {
+          formatted_date = `${format(date, 'EEEE')},${format(date, 'kk:mm')}`;
+        } else {
+          if (isThisYear(date) === true) {
+            formatted_date = format(date, 'dd LLLL, kk:mm');
+          } else {
+            formatted_date = format(date, 'dd LLLL yyyy, kk:mm');
+          }
+        }
+      }
+    }
+
+    last_message_date.innerHTML = formatted_date;
   }
 }
+
+const messages_buffer = [];
 
 const new_message_input = document.getElementById('new_message_input');
 const new_message_submit = document.getElementById('new_message_submit');
 
-new_message_submit.addEventListener('click', registerNewMessage);
+new_message_submit.addEventListener('click', createNewMessage);
 
-function registerNewMessage() {
-  const text = new_message_input.value;
-  const author = me.name;
-  const id = me.id;
-  const author_picture = me.picture;
-  let date = Date.now();
+async function createNewMessage() {
+  const new_message_Value = new_message_input.value;
 
-  if (isToday(date) === true) {
-    date = format(date, 'kk:mm');
+  const raw_date = Date.now();
+
+  const date = formatISO(raw_date);
+
+  const arr = [
+    {
+      id: me.id,
+      user: { email: me.email, name: me.name },
+      text: new_message_Value,
+      createdAt: date,
+    },
+  ];
+
+  recursive_render(arr, 0);
+
+  return (new_message_input.value = '');
+}
+
+async function recursive_render(message_array, message_number) {
+  if (message_number === message_array.length) {
+    return;
   } else {
-    date = format(date, 'dd MMM kk:mm');
+    const current_elem = message_array[message_number];
+
+    const id = current_elem._id;
+    const author = {
+      name: current_elem.user.name,
+      picture: 'https://www.hallmarktour.com/img/profile-img.jpg',
+    };
+    const text = current_elem.text;
+    const email = current_elem.user.email;
+
+    const date = current_elem.createdAt;
+
+    const new_message = new Message({
+      id: id,
+      author: { author: author.name, picture: author.picture },
+      date: date,
+      text: text,
+    });
+
+    if (email === me.email) {
+      new_message.author.picture = me.picture;
+
+      if (message_number === 0) {
+        new_message.renderMessage(true, true);
+      } else {
+        new_message.renderMessage(true, false);
+      }
+    } else {
+      if (message_number === 0) {
+        new_message.renderMessage(false, true);
+      } else {
+        new_message.renderMessage(false, false);
+      }
+    }
+
+    if (message_number === message_array.length - 1) {
+      new_message.changeLastMessageOfChat(true);
+    }
+
+    message_number += 1;
+
+    return await recursive_render(message_array, message_number);
   }
+}
 
-  let options = {
-    id: id,
-    author: { author: author, picture: author_picture },
-    date: date,
-    text: text,
-  };
+async function getMessageHistory(chat_name) {
+  if (chat_name === 'Strada test chat') {
+    const url = 'https://edu.strada.one/api/messages/';
 
-  const new_message = new Message(options);
+    let request = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${me.token}`,
+      },
+    });
 
-  message_storage.push(new_message);
+    const responce = await request.json();
 
-  if (!empty_chat_warning.classList.contains('hidden')) {
-    empty_chat_warning.classList.add('hidden');
+    const message_history = responce.messages.reverse();
+
+    if (!message_history.length) {
+      empty_chat_warning.classList.remove('hidden');
+    }
+    const sorted_array = groupMessagesByDate(message_history);
+
+    recursive_group_render(sorted_array);
   }
+}
 
-  new_message_input.value = '';
+function groupMessagesByDate(messages_array) {
+  let groups = [];
 
-  new_message.renderMessage();
-  new_message.changeLastMessageOfChat();
+  for (let element of messages_array) {
+    let existingGroups = groups.filter(
+      (group) => group.date == format(parseISO(element.createdAt), 'dd-MM-yyyy')
+    );
+    if (existingGroups.length > 0) {
+      existingGroups[0].messages.push(element);
+    } else {
+      let newGroup = {
+        date: format(parseISO(element.createdAt), 'dd-MM-yyyy'),
+        messages: [element],
+      };
+
+      groups.push(newGroup);
+    }
+  }
+  return groups;
+}
+
+async function recursive_group_render(group_array) {
+  if (Array.isArray(group_array)) {
+    group_array.forEach((item) => {
+      return recursive_group_render(item);
+    });
+  } else {
+    if (group_array) {
+      const group = group_array.messages;
+      const date = group_array.date;
+
+      return await recursive_render(group, 0, date);
+    }
+
+    return await recursive_group_render();
+  }
 }
 
 // Варнинги
@@ -854,19 +779,17 @@ const chat_interface_block = document.querySelector('.chat-interface');
 test_chat.addEventListener('click', showThisChat);
 
 function showThisChat() {
-  test_chat.classList.add('chat_active');
+  const this_chat = document.querySelector('.chat:hover');
 
-  const messages_list = document.querySelector(
-    '.chat-interface__messages-block'
-  );
+  const chat_name = this_chat.querySelector('.chat__name').textContent;
+
+  test_chat.classList.add('chat_active');
 
   if (chat_interface_block.classList.contains('hidden')) {
     chat_interface_block.classList.remove('hidden');
   }
 
-  if (messages_list.childNodes.length < 4) {
-    empty_chat_warning.classList.remove('hidden');
-  }
+  getMessageHistory(chat_name);
 }
 
 // Меню с емодзи

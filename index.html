@@ -33,6 +33,26 @@
       </div>
     </div>
   </template>
+  <template id="modal_confirmation">
+    <div class="modal__notification">
+      <div class="modal__notification-content">
+        <div class="modal__notification-img"></div>
+        <p class="modal__notificaion-text"></p>
+      </div>
+      <div class="modal__notification-buttons-block">
+        <button
+          class="modal__notification-btn modal__notification-btn_confirm"
+        ></button
+        ><button
+          class="modal__notification-btn modal__notification-btn_cancel"
+        ></button>
+      </div>
+    </div>
+  </template>
+  <template id="messages_group">
+    <div class="chat-interface__date-block">
+      <p></p></div
+  ></template>
   <body>
     <div class="container">
       <div class="modals hidden">
@@ -309,7 +329,7 @@
               id="new_message_input"
               placeholder="Введите сообщение..."
             />
-            <input type="submit" id="new_message_submit" />
+            <input type="submit" id="new_message_submit" value="" />
             <button class="emoji-picker__show-btn">
               <emoji-picker class="emoji-picker hidden"></emoji-picker>
             </button>
