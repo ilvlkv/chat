@@ -9,7 +9,7 @@
   }
   100% {
     width: 30%;
-    @media (max-width: 2560px) {
+    @media (max-width: 1280px) {
       width: 40% !important;
     }
     -webkit-transform: scaleX(1);
@@ -23,6 +23,9 @@
 @keyframes scale-out-hor-left {
   0% {
     width: 30%;
+    @media (max-width: 1280px) {
+      width: 40% !important;
+    }
     transform: scaleX(1);
     transform: scaleX(1);
     -webkit-transform-origin: 0 0;

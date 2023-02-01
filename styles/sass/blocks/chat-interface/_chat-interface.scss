@@ -47,7 +47,7 @@
 
   p {
     width: 250px;
-    height: 100%;
+    height: 30px;
 
     display: flex;
     justify-content: center;
@@ -124,10 +124,12 @@
   display: flex;
   align-items: center;
 
+  justify-content: space-evenly;
+
   background-color: $white;
 
   input[type='text'] {
-    width: 95%;
+    width: 90%;
     height: 100%;
 
     border-radius: 15px;
@@ -149,7 +151,19 @@
   }
 
   input[type='submit'] {
-    display: none;
+    width: 25px;
+    height: 25px;
+
+    display: block;
+    background: none;
+    border: none;
+
+    background: url('/styles/img/send-msg.svg');
+    background-size: cover;
+
+    &:hover {
+      cursor: pointer;
+    }
   }
 }
 
@@ -176,30 +190,8 @@
 
 // Resp
 
-@media (max-width: 2560px) {
+@media (max-width: 1280px) {
   .chat-interface__new-message-block {
     width: 750px;
-
-    justify-content: space-evenly;
-
-    input[type='submit'] {
-      width: 25px;
-      height: 25px;
-
-      display: block;
-      background: none;
-      border: none;
-
-      background: url('/styles/img/send-msg.svg');
-      background-size: cover;
-
-      &:hover {
-        cursor: pointer;
-      }
-    }
-
-    input[type='text'] {
-      width: 90%;
-    }
   }
 }

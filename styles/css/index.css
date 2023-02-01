@@ -9,7 +9,7 @@
   }
   100% {
     width: 30%;
-    @media (max-width: 2560px) {
+    @media (max-width: 1280px) {
       width: 40% !important;
     }
     -webkit-transform: scaleX(1);
@@ -30,7 +30,7 @@
   }
   100% {
     width: 30%;
-    @media (max-width: 2560px) {
+    @media (max-width: 1280px) {
       width: 40% !important;
     }
     -webkit-transform: scaleX(1);
@@ -43,6 +43,9 @@
 @-webkit-keyframes scale-out-hor-left {
   0% {
     width: 30%;
+    @media (max-width: 1280px) {
+      width: 40% !important;
+    }
     -webkit-transform: scaleX(1);
             transform: scaleX(1);
     transform: scaleX(1);
@@ -62,6 +65,9 @@
 @keyframes scale-out-hor-left {
   0% {
     width: 30%;
+    @media (max-width: 1280px) {
+      width: 40% !important;
+    }
     -webkit-transform: scaleX(1);
             transform: scaleX(1);
     transform: scaleX(1);
@@ -838,7 +844,7 @@ body {
 }
 .chat-interface__date-block p {
   width: 250px;
-  height: 100%;
+  height: 30px;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
@@ -912,10 +918,13 @@ body {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  -webkit-box-pack: space-evenly;
+      -ms-flex-pack: space-evenly;
+          justify-content: space-evenly;
   background-color: #ffffff;
 }
 .chat-interface__new-message-block input[type=text] {
-  width: 95%;
+  width: 90%;
   height: 100%;
   border-radius: 15px;
   border: none;
@@ -930,7 +939,16 @@ body {
   position: relative;
 }
 .chat-interface__new-message-block input[type=submit] {
-  display: none;
+  width: 25px;
+  height: 25px;
+  display: block;
+  background: none;
+  border: none;
+  background: url("/styles/img/send-msg.svg");
+  background-size: cover;
+}
+.chat-interface__new-message-block input[type=submit]:hover {
+  cursor: pointer;
 }
 
 .emoji-picker {
@@ -950,27 +968,9 @@ body {
   cursor: pointer;
 }
 
-@media (max-width: 2560px) {
+@media (max-width: 1280px) {
   .chat-interface__new-message-block {
     width: 750px;
-    -webkit-box-pack: space-evenly;
-        -ms-flex-pack: space-evenly;
-            justify-content: space-evenly;
-  }
-  .chat-interface__new-message-block input[type=submit] {
-    width: 25px;
-    height: 25px;
-    display: block;
-    background: none;
-    border: none;
-    background: url("/styles/img/send-msg.svg");
-    background-size: cover;
-  }
-  .chat-interface__new-message-block input[type=submit]:hover {
-    cursor: pointer;
-  }
-  .chat-interface__new-message-block input[type=text] {
-    width: 90%;
   }
 }
 .modal__setter-profile-img {

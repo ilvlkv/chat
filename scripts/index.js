@@ -1,4 +1,4 @@
-// Импорты(сторонние библиотеки)
+// Импорты
 
 import {
   format,
@@ -13,8 +13,6 @@ import 'emoji-picker-element';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import Cookies from 'js-cookie';
 
-// Импорты(мои модули)
-
 import { addClass, removeClass } from '../scripts/modules/class-changer';
 import {
   showModal,
@@ -22,6 +20,8 @@ import {
   showModalConfirmation,
   showModalNotification,
 } from '../scripts/modules/modals';
+import { request } from './modules/fetcher';
+
 // Инициализация приложения
 
 const me = {
@@ -30,6 +30,7 @@ const me = {
   picture: 'https://www.hallmarktour.com/img/profile-img.jpg',
   token: null,
   email: null,
+  socket: null,
 };
 
 async function initializeProfile() {
@@ -42,20 +43,12 @@ async function initializeProfile() {
 
   if (user_token) {
     const url = 'https://edu.strada.one/api/user/me';
+    const result = await request.get(url, user_token);
 
-    const request = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${user_token}`,
-      },
-    });
-
-    const result = await request.json();
-
-    (me.name = result.name),
-      (me.id = result._id),
-      (me.token = user_token),
-      (me.email = result.email);
+    me.name = result.name;
+    me.id = result._id;
+    me.token = user_token;
+    me.email = result.email;
 
     if (profile_img) {
       me.picture = profile_img;
@@ -85,7 +78,8 @@ async function initializeProfile() {
 
 window.addEventListener('load', initializeProfile);
 
-// Всплывающее меню
+// Меню с чатами
+
 const menu_toggler = document.querySelector('.hamburger');
 const menu_block = document.querySelector('.chats-block');
 
@@ -130,8 +124,28 @@ function getChatsMenu() {
   }
 }
 
-// Модальные окна
+// Выбор чата
 
+const test_chat = document.querySelector('.chat');
+const chat_interface_block = document.querySelector('.chat-interface');
+
+test_chat.addEventListener('click', showThisChat);
+
+function showThisChat() {
+  const this_chat = document.querySelector('.chat:hover');
+
+  const chat_name = this_chat.querySelector('.chat__name').textContent;
+
+  test_chat.classList.add('chat_active');
+
+  if (chat_interface_block.classList.contains('hidden')) {
+    chat_interface_block.classList.remove('hidden');
+  }
+
+  getMessageHistoryAndConnectWs(chat_name);
+}
+
+// Модальные окна
 // Модальное окно с настройками профиля
 
 const profile_settings_trigger = document.querySelector('.menu__profile-link');
@@ -232,7 +246,6 @@ function changeProfileImg() {
     );
   }
 }
-
 async function changeProfileName() {
   const new_name_node = document.getElementById('change_profile_new_name');
   const new_name_value = new_name_node.value;
@@ -347,6 +360,7 @@ async function changeProfileName() {
 }
 
 // Авторизация
+// Дефолтный сценарий
 
 const authorization_email_submit = document.getElementById(
   'authorization_email_submit'
@@ -397,15 +411,11 @@ async function sendTokenRequestByEmail() {
   } else {
     modal_loader.remove('hidden');
 
-    let responce = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json;charset=utf-8',
-      },
-      body: JSON.stringify(user_email),
-    });
+    let responce = await request.post(url, user_email);
 
-    if (responce.ok === true) {
+    if (responce.email) {
+      hideEmailInput();
+
       modal_loader.add('hidden');
 
       const token_setter_condition =
@@ -423,42 +433,6 @@ async function sendTokenRequestByEmail() {
       }, 500);
     }
   }
-}
-
-const already_have_token_btn = document.querySelector('.already-have-key');
-
-already_have_token_btn.addEventListener('click', showTokenInputField);
-
-function showTokenInputField() {
-  authorization_email_submit.removeEventListener(
-    'click',
-    sendTokenRequestByEmail
-  );
-  const email_form_block = document.getElementById('email_form_block');
-
-  email_form_block.classList.add('email-input_exit');
-  setTimeout(() => {
-    email_form_block.classList.remove('email-input_exit');
-    email_form_block.classList.add('hidden');
-  }, 500);
-
-  already_have_token_btn.classList.add('hidden');
-
-  const token_setter_condition =
-    document.getElementById('token_setter').classList;
-
-  token_setter_condition.remove('hidden');
-  token_setter_condition.add('modals_entrance');
-
-  setTimeout(() => {
-    token_setter_condition.remove('modals_entrance');
-    authorization_token_submit.addEventListener(
-      'click',
-      getAuthorizationByToken
-    );
-  }, 500);
-
-  already_have_token_btn.removeEventListener('click', showTokenInputField);
 }
 
 function getAuthorizationByToken() {
@@ -499,7 +473,49 @@ function getAuthorizationByToken() {
   }
 }
 
-// Получение и создание сообщений
+// Сценарий, если уже есть токен
+
+const already_have_token_btn = document.querySelector('.already-have-key');
+
+already_have_token_btn.addEventListener('click', showTokenInputField);
+
+function showTokenInputField() {
+  hideEmailInput();
+
+  const token_setter_condition =
+    document.getElementById('token_setter').classList;
+
+  token_setter_condition.remove('hidden');
+  token_setter_condition.add('modals_entrance');
+
+  setTimeout(() => {
+    token_setter_condition.remove('modals_entrance');
+    authorization_token_submit.addEventListener(
+      'click',
+      getAuthorizationByToken
+    );
+  }, 500);
+
+  already_have_token_btn.removeEventListener('click', showTokenInputField);
+}
+
+function hideEmailInput() {
+  already_have_token_btn.classList.add('hidden');
+
+  authorization_email_submit.removeEventListener(
+    'click',
+    sendTokenRequestByEmail
+  );
+  const email_form_block = document.getElementById('email_form_block');
+
+  email_form_block.classList.add('email-input_exit');
+  setTimeout(() => {
+    email_form_block.classList.remove('email-input_exit');
+    email_form_block.classList.add('hidden');
+  }, 500);
+}
+
+// Получение, создание, работа с сообщениями
 class Message {
   constructor(options) {
     (this.id = options.id),
@@ -511,13 +527,16 @@ class Message {
       (this.text = options.text);
   }
 
-  renderMessage(is_mine, first_message_of_group) {
+  renderMessage(is_mine, first_message_of_group, previous_author) {
     const message_template = document.getElementById('message');
     const messages_block = document.querySelector(
       '.chat-interface__messages-block'
     );
 
     const this_message = message_template.content.cloneNode(true);
+    const this_message_author_block =
+      this_message.querySelector('.message__author');
+
     const this_message_author = this_message.querySelector(
       '.message__author-name'
     );
@@ -539,6 +558,11 @@ class Message {
     if (is_mine === true) {
       this_message.querySelector('.message').classList.add('message_outgoing');
       this_message_author.innerHTML = 'Вы';
+    }
+
+    if (previous_author === this.author.name) {
+      const parent = this_message_author_block.parentNode;
+      parent.removeChild(this_message_author_block);
     }
 
     if (first_message_of_group === true) {
@@ -599,8 +623,8 @@ class Message {
 
     last_message_author_img.setAttribute('src', this.author.picture);
     let text = this.text;
-    if (text.length > 10) {
-      text = `${text.slice(0, 10)}...`;
+    if (text.length > 15) {
+      text = `${text.slice(0, 15)}...`;
     }
 
     last_message_text.innerHTML = text;
@@ -638,25 +662,113 @@ new_message_submit.addEventListener('click', createNewMessage);
 async function createNewMessage() {
   const new_message_Value = new_message_input.value;
 
-  const raw_date = Date.now();
+  if (new_message_Value) {
+    me.socket.send(JSON.stringify({ text: new_message_Value }));
 
-  const date = formatISO(raw_date);
-
-  const arr = [
-    {
-      id: me.id,
-      user: { email: me.email, name: me.name },
-      text: new_message_Value,
-      createdAt: date,
-    },
-  ];
-
-  recursive_render(arr, 0);
-
-  return (new_message_input.value = '');
+    return (new_message_input.value = '');
+  } else {
+    return;
+  }
 }
 
-async function recursive_render(message_array, message_number) {
+async function getMessageHistory(chat_name) {
+  if (chat_name === 'Strada test chat') {
+    const url = 'https://edu.strada.one/api/messages/';
+
+    let responce = await request.get(url, me.token);
+
+    const message_history = responce.messages.reverse();
+
+    if (!message_history.length) {
+      empty_chat_warning.classList.remove('hidden');
+    }
+    const sorted_array = groupMessagesByDate(message_history);
+
+    recursive_group_render(sorted_array);
+  }
+}
+
+async function getMessageHistoryAndConnectWs(chat_name) {
+  await getMessageHistory(chat_name);
+
+  (me.socket = new WebSocket(`ws://edu.strada.one/websockets?${me.token}`)),
+    (me.socket.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+
+      console.log(`Получено новое сообщение от ${data.user.email}`);
+
+      const arr = [
+        {
+          id: data._id,
+          user: { email: data.user.email, name: data.user.name },
+          text: data.text,
+          createdAt: data.createdAt,
+        },
+      ];
+
+      const last_message = document.querySelector('.message');
+      const last_author = last_message.querySelector('.message__author');
+
+      if (last_author) {
+        if (last_author.textContent !== data.user.name) {
+          recursive_render(arr, 0);
+        } else {
+          recursive_render(arr, 0, data.user.name);
+        }
+      } else {
+        if (last_message.classList.contains('message_outgoing')) {
+          recursive_render(arr, 0, data.user.name);
+        } else {
+          recursive_render(arr, 0);
+        }
+      }
+    });
+}
+
+function groupMessagesByDate(messages_array) {
+  let groups = [];
+
+  for (let element of messages_array) {
+    let existingGroups = groups.filter(
+      (group) => group.date == format(parseISO(element.createdAt), 'dd-MM-yyyy')
+    );
+    if (existingGroups.length > 0) {
+      existingGroups[0].messages.push(element);
+    } else {
+      let newGroup = {
+        date: format(parseISO(element.createdAt), 'dd-MM-yyyy'),
+        messages: [element],
+      };
+
+      groups.push(newGroup);
+    }
+  }
+
+  return groups;
+}
+
+async function recursive_group_render(group_array) {
+  if (Array.isArray(group_array)) {
+    group_array.forEach((item) => {
+      return recursive_group_render(item);
+    });
+  } else {
+    if (group_array) {
+      const group = group_array.messages;
+      const date = group_array.date;
+
+      return await recursive_render(group, 0, null);
+    }
+
+    return await recursive_group_render();
+  }
+}
+
+async function recursive_render(
+  message_array,
+  message_number,
+  previous_author
+) {
   if (message_number === message_array.length) {
     return;
   } else {
@@ -683,15 +795,17 @@ async function recursive_render(message_array, message_number) {
       new_message.author.picture = me.picture;
 
       if (message_number === 0) {
-        new_message.renderMessage(true, true);
+        new_message.renderMessage(true, true, previous_author);
       } else {
-        new_message.renderMessage(true, false);
+        previous_author = author.name;
+        new_message.renderMessage(true, false, previous_author);
+        // console.log(previous_author);
       }
     } else {
       if (message_number === 0) {
-        new_message.renderMessage(false, true);
+        new_message.renderMessage(false, true, previous_author);
       } else {
-        new_message.renderMessage(false, false);
+        new_message.renderMessage(false, false, previous_author);
       }
     }
 
@@ -699,97 +813,16 @@ async function recursive_render(message_array, message_number) {
       new_message.changeLastMessageOfChat(true);
     }
 
+    previous_author = author.name;
+
     message_number += 1;
 
-    return await recursive_render(message_array, message_number);
-  }
-}
-
-async function getMessageHistory(chat_name) {
-  if (chat_name === 'Strada test chat') {
-    const url = 'https://edu.strada.one/api/messages/';
-
-    let request = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${me.token}`,
-      },
-    });
-
-    const responce = await request.json();
-
-    const message_history = responce.messages.reverse();
-
-    if (!message_history.length) {
-      empty_chat_warning.classList.remove('hidden');
-    }
-    const sorted_array = groupMessagesByDate(message_history);
-
-    recursive_group_render(sorted_array);
-  }
-}
-
-function groupMessagesByDate(messages_array) {
-  let groups = [];
-
-  for (let element of messages_array) {
-    let existingGroups = groups.filter(
-      (group) => group.date == format(parseISO(element.createdAt), 'dd-MM-yyyy')
+    return await recursive_render(
+      message_array,
+      message_number,
+      previous_author
     );
-    if (existingGroups.length > 0) {
-      existingGroups[0].messages.push(element);
-    } else {
-      let newGroup = {
-        date: format(parseISO(element.createdAt), 'dd-MM-yyyy'),
-        messages: [element],
-      };
-
-      groups.push(newGroup);
-    }
   }
-  return groups;
-}
-
-async function recursive_group_render(group_array) {
-  if (Array.isArray(group_array)) {
-    group_array.forEach((item) => {
-      return recursive_group_render(item);
-    });
-  } else {
-    if (group_array) {
-      const group = group_array.messages;
-      const date = group_array.date;
-
-      return await recursive_render(group, 0, date);
-    }
-
-    return await recursive_group_render();
-  }
-}
-
-// Варнинги
-
-const empty_chat_warning = document.querySelector('.empty-warning');
-
-// Выбор чата
-
-const test_chat = document.querySelector('.chat');
-const chat_interface_block = document.querySelector('.chat-interface');
-
-test_chat.addEventListener('click', showThisChat);
-
-function showThisChat() {
-  const this_chat = document.querySelector('.chat:hover');
-
-  const chat_name = this_chat.querySelector('.chat__name').textContent;
-
-  test_chat.classList.add('chat_active');
-
-  if (chat_interface_block.classList.contains('hidden')) {
-    chat_interface_block.classList.remove('hidden');
-  }
-
-  getMessageHistory(chat_name);
 }
 
 // Меню с емодзи
@@ -818,3 +851,7 @@ document
       event.detail.unicode
     );
   });
+
+// Варнинги
+
+const empty_chat_warning = document.querySelector('.empty-warning');
