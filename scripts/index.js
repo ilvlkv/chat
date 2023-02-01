@@ -78,73 +78,6 @@ async function initializeProfile() {
 
 window.addEventListener('load', initializeProfile);
 
-// Меню с чатами
-
-const menu_toggler = document.querySelector('.hamburger');
-const menu_block = document.querySelector('.chats-block');
-
-menu_toggler.addEventListener('click', getChatsMenu);
-
-function getChatsMenu() {
-  const menu_condition = menu_block.classList;
-  const bar_block = document.querySelector('.menu');
-  const block_out = document.querySelector('.chat-interface');
-  const hello_message = document.querySelector('.hello-message');
-
-  if (!hello_message.classList.contains('hidden')) {
-    hello_message.classList.add('hidden');
-  }
-
-  if (menu_condition.contains('chats-block_hidden')) {
-    setTimeout(() => {
-      menu_condition.remove('chats-block_entrance');
-    }, 500);
-    bar_block.classList.add('menu_without-shadow');
-    menu_condition.add('chats-block_entrance');
-    menu_condition.remove('chats-block_hidden');
-
-    block_out.addEventListener('click', function hide() {
-      setTimeout(() => {
-        menu_condition.add('chats-block_hidden');
-        bar_block.classList.remove('menu_without-shadow');
-        menu_condition.remove('chats-block_exit');
-      }, 500);
-      menu_condition.add('chats-block_exit');
-      menu_toggler.click();
-
-      block_out.removeEventListener('click', hide);
-    });
-  } else {
-    setTimeout(() => {
-      menu_condition.add('chats-block_hidden');
-      bar_block.classList.remove('menu_without-shadow');
-      menu_condition.remove('chats-block_exit');
-    }, 500);
-    menu_condition.add('chats-block_exit');
-  }
-}
-
-// Выбор чата
-
-const test_chat = document.querySelector('.chat');
-const chat_interface_block = document.querySelector('.chat-interface');
-
-test_chat.addEventListener('click', showThisChat);
-
-function showThisChat() {
-  const this_chat = document.querySelector('.chat:hover');
-
-  const chat_name = this_chat.querySelector('.chat__name').textContent;
-
-  test_chat.classList.add('chat_active');
-
-  if (chat_interface_block.classList.contains('hidden')) {
-    chat_interface_block.classList.remove('hidden');
-  }
-
-  getMessageHistoryAndConnectWs(chat_name);
-}
-
 // Модальные окна
 // Модальное окно с настройками профиля
 
@@ -515,6 +448,73 @@ function hideEmailInput() {
   }, 500);
 }
 
+// Меню с чатами
+
+const menu_toggler = document.querySelector('.hamburger');
+const menu_block = document.querySelector('.chats-block');
+
+menu_toggler.addEventListener('click', getChatsMenu);
+
+function getChatsMenu() {
+  const menu_condition = menu_block.classList;
+  const bar_block = document.querySelector('.menu');
+  const block_out = document.querySelector('.chat-interface');
+  const hello_message = document.querySelector('.hello-message');
+
+  if (!hello_message.classList.contains('hidden')) {
+    hello_message.classList.add('hidden');
+  }
+
+  if (menu_condition.contains('chats-block_hidden')) {
+    setTimeout(() => {
+      menu_condition.remove('chats-block_entrance');
+    }, 500);
+    bar_block.classList.add('menu_without-shadow');
+    menu_condition.add('chats-block_entrance');
+    menu_condition.remove('chats-block_hidden');
+
+    block_out.addEventListener('click', function hide() {
+      setTimeout(() => {
+        menu_condition.add('chats-block_hidden');
+        bar_block.classList.remove('menu_without-shadow');
+        menu_condition.remove('chats-block_exit');
+      }, 500);
+      menu_condition.add('chats-block_exit');
+      menu_toggler.click();
+
+      block_out.removeEventListener('click', hide);
+    });
+  } else {
+    setTimeout(() => {
+      menu_condition.add('chats-block_hidden');
+      bar_block.classList.remove('menu_without-shadow');
+      menu_condition.remove('chats-block_exit');
+    }, 500);
+    menu_condition.add('chats-block_exit');
+  }
+}
+
+// Выбор чата
+
+const test_chat = document.querySelector('.chat');
+const chat_interface_block = document.querySelector('.chat-interface');
+
+test_chat.addEventListener('click', showThisChat);
+
+function showThisChat() {
+  const this_chat = document.querySelector('.chat:hover');
+
+  const chat_name = this_chat.querySelector('.chat__name').textContent;
+
+  test_chat.classList.add('chat_active');
+
+  if (chat_interface_block.classList.contains('hidden')) {
+    chat_interface_block.classList.remove('hidden');
+  }
+
+  getMessageHistoryAndConnectWs(chat_name);
+}
+
 // Получение, создание, работа с сообщениями
 class Message {
   constructor(options) {
@@ -710,16 +710,18 @@ async function getMessageHistoryAndConnectWs(chat_name) {
       const last_author = last_message.querySelector('.message__author');
 
       if (last_author) {
-        if (last_author.textContent !== data.user.name) {
-          recursive_render(arr, 0);
-        } else {
+        if (last_message.classList.contains('message_outgoing')) {
           recursive_render(arr, 0, data.user.name);
+        } else {
+          if (last_author.textContent === data.user.name) {
+            recursive_render(arr, 0, data.user.name);
+          }
         }
       } else {
         if (last_message.classList.contains('message_outgoing')) {
           recursive_render(arr, 0, data.user.name);
         } else {
-          recursive_render(arr, 0);
+          recursive_render(arr, 0, data.user.name);
         }
       }
     });
@@ -791,21 +793,22 @@ async function recursive_render(
       text: text,
     });
 
+    const last_author = previous_author;
+
     if (email === me.email) {
       new_message.author.picture = me.picture;
 
       if (message_number === 0) {
-        new_message.renderMessage(true, true, previous_author);
+        new_message.renderMessage(true, true, last_author);
       } else {
         previous_author = author.name;
-        new_message.renderMessage(true, false, previous_author);
-        // console.log(previous_author);
+        new_message.renderMessage(true, false, last_author);
       }
     } else {
       if (message_number === 0) {
-        new_message.renderMessage(false, true, previous_author);
+        new_message.renderMessage(false, true, last_author);
       } else {
-        new_message.renderMessage(false, false, previous_author);
+        new_message.renderMessage(false, false, last_author);
       }
     }
 
