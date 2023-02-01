@@ -522,6 +522,7 @@ class Message {
       (this.author = {
         name: options.author.author,
         picture: options.author.picture,
+        email: options.author.email,
       }),
       (this.date = options.date),
       (this.text = options.text);
@@ -534,6 +535,9 @@ class Message {
     );
 
     const this_message = message_template.content.cloneNode(true);
+
+    const this_message_block = this_message.querySelector('.message');
+
     const this_message_author_block =
       this_message.querySelector('.message__author');
 
@@ -554,6 +558,8 @@ class Message {
     this_message_date.innerHTML = format(date, 'kk:mm');
 
     this_message_author_img.setAttribute('src', this.author.picture);
+
+    this_message_block.classList.add(`${this.author.email}`);
 
     if (is_mine === true) {
       this_message.querySelector('.message').classList.add('message_outgoing');
@@ -709,20 +715,32 @@ async function getMessageHistoryAndConnectWs(chat_name) {
       const last_message = document.querySelector('.message');
       const last_author = last_message.querySelector('.message__author');
 
-      if (last_author) {
-        if (last_message.classList.contains('message_outgoing')) {
-          recursive_render(arr, 0, data.user.name);
-        } else {
-          if (last_author.textContent === data.user.name) {
-            recursive_render(arr, 0, data.user.name);
-          }
-        }
-      } else {
-        if (last_message.classList.contains('message_outgoing')) {
-          recursive_render(arr, 0, data.user.name);
-        } else {
-          recursive_render(arr, 0, data.user.name);
-        }
+      if (
+        last_author &&
+        last_message.classList.contains(`${data.user.email}`)
+      ) {
+        return recursive_render(arr, 0, data.user.name);
+      }
+
+      if (
+        last_author &&
+        !last_message.classList.contains(`${data.user.email}`)
+      ) {
+        return recursive_render(arr, 0, null);
+      }
+
+      if (
+        !last_author &&
+        last_message.classList.contains(`${data.user.email}`)
+      ) {
+        return recursive_render(arr, 0, data.user.name);
+      }
+
+      if (
+        !last_author &&
+        !last_message.classList.contains(`${data.user.email}`)
+      ) {
+        return recursive_render(arr, 0, null);
       }
     });
 }
@@ -788,7 +806,7 @@ async function recursive_render(
 
     const new_message = new Message({
       id: id,
-      author: { author: author.name, picture: author.picture },
+      author: { author: author.name, picture: author.picture, email: email },
       date: date,
       text: text,
     });
