@@ -97,6 +97,9 @@
 
     font-weight: 600;
     color: $dark-gray;
+
+    border: 1px solid $white;
+    transition: 200ms;
   }
 
   input[type='submit'] {
@@ -256,4 +259,23 @@
 
 .email-input_exit {
   animation: scale-out-top 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
+}
+
+.input_failed {
+  border: 1px solid $red !important;
+  animation: jello-vertical 0.5s both;
+
+  color: $red !important;
+}
+
+.input_completed {
+  border: 1px solid $inchworm !important;
+
+  color: $inchworm !important;
+}
+
+.input_confirm {
+  border: 1px solid $dandelion !important;
+
+  color: $dandelion !important;
 }

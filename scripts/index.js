@@ -107,12 +107,16 @@ function changeProfileImg() {
     'change_profile_img-preview'
   );
 
-  img_url_node.value = '';
-
   const reg =
     /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
 
   if (reg.test(img_url) === false) {
+    addClass(img_url_node, 'input_failed');
+
+    setTimeout(() => {
+      removeClass(img_url_node, 'input_failed');
+    }, 1500);
+
     change_profile_img_trigger.removeEventListener('click', changeProfileImg);
 
     setTimeout(() => {
@@ -122,12 +126,23 @@ function changeProfileImg() {
     showModalNotification('error', 'profile-setting', 'Введите корректный URL');
     return false;
   } else {
+    addClass(img_url_node, 'input_confirm');
+
     change_profile_img_preview.setAttribute('src', img_url);
 
     showModalConfirmation(
       'profile-setting',
       null,
       () => {
+        removeClass(img_url_node, 'input_confirm');
+        addClass(img_url_node, 'input_completed');
+
+        setTimeout(() => {
+          removeClass(img_url_node, 'input_completed');
+
+          img_url_node.value = '';
+        }, 1500);
+
         change_profile_img_trigger.removeEventListener(
           'click',
           changeProfileImg
@@ -156,6 +171,15 @@ function changeProfileImg() {
         );
       },
       () => {
+        removeClass(img_url_node, 'input_confirm');
+        addClass(img_url_node, 'input_failed');
+
+        setTimeout(() => {
+          removeClass(img_url_node, 'input_failed');
+
+          change_profile_img_preview.setAttribute('src', me.picture);
+        }, 1500);
+
         change_profile_img_trigger.removeEventListener(
           'click',
           changeProfileImg
@@ -183,9 +207,9 @@ async function changeProfileName() {
   const new_name_node = document.getElementById('change_profile_new_name');
   const new_name_value = new_name_node.value;
 
-  new_name_node.value = '';
-
   if (new_name_value) {
+    addClass(new_name_node, 'input_confirm');
+
     showModalConfirmation(
       'profile-setting',
       null,
@@ -206,6 +230,8 @@ async function changeProfileName() {
         let responce = await request.json();
 
         if (responce.message) {
+          removeClass(new_name_node, 'input_confirm');
+
           change_profile_name_trigger.removeEventListener(
             'click',
             changeProfileName
@@ -219,12 +245,24 @@ async function changeProfileName() {
           }, 2500);
 
           if (responce.message === 'Name is too short. Minimum 2 symbols') {
+            addClass(new_name_node, 'input_failed');
+
+            setTimeout(() => {
+              removeClass(new_name_node, 'input_failed');
+            }, 1500);
+
             showModalNotification(
               'error',
               'profile-setting',
               `Имя должно быть больше 2 символов!`
             );
           } else {
+            addClass(new_name_node, 'input_failed');
+
+            setTimeout(() => {
+              removeClass(new_name_node, 'input_failed');
+            }, 1500);
+
             showModalNotification(
               'error',
               'profile-setting',
@@ -236,6 +274,15 @@ async function changeProfileName() {
         }
 
         if (responce.name) {
+          removeClass(new_name_node, 'input_confirm');
+          addClass(new_name_node, 'input_completed');
+
+          setTimeout(() => {
+            removeClass(new_name_node, 'input_completed');
+
+            new_name_node.value = '';
+          }, 1500);
+
           change_profile_name_trigger.removeEventListener(
             'click',
             changeProfileName
@@ -256,6 +303,13 @@ async function changeProfileName() {
         }
       },
       () => {
+        removeClass(new_name_node, 'input_confirm');
+        addClass(new_name_node, 'input_failed');
+
+        setTimeout(() => {
+          removeClass(new_name_node, 'input_failed');
+        }, 1500);
+
         change_profile_name_trigger.removeEventListener(
           'click',
           changeProfileName
@@ -316,17 +370,80 @@ async function sendTokenRequestByEmail() {
   const email_value_node = document.getElementById('authorization_email');
   const email_value = email_value_node.value;
 
-  email_value_node.value = '';
-
   const user_email = {
     email: email_value,
   };
 
-  if (reg.test(email_value) === false) {
+  if (email_value) {
+    if (reg.test(email_value) === false) {
+      authorization_email_submit.removeEventListener(
+        'click',
+        sendTokenRequestByEmail
+      );
+
+      addClass(email_value_node, 'input_failed');
+
+      setTimeout(() => {
+        removeClass(email_value_node, 'input_failed');
+      }, 1500);
+
+      setTimeout(() => {
+        authorization_email_submit.addEventListener(
+          'click',
+          sendTokenRequestByEmail
+        );
+      }, 2500);
+
+      showModalNotification(
+        'error',
+        'authorization',
+        'Введен некорректный e-mail'
+      );
+      return false;
+    } else {
+      addClass(email_value_node, 'input_completed');
+
+      setTimeout(() => {
+        removeClass(email_value_node, 'input_completed');
+      }, 2000);
+
+      modal_loader.remove('hidden');
+
+      let responce = await request.post(url, user_email);
+
+      if (responce.email) {
+        hideEmailInput();
+
+        modal_loader.add('hidden');
+
+        const token_setter_condition =
+          document.getElementById('token_setter').classList;
+
+        token_setter_condition.remove('hidden');
+        token_setter_condition.add('modals_entrance');
+
+        setTimeout(() => {
+          token_setter_condition.remove('modals_entrance');
+          authorization_token_submit.addEventListener(
+            'click',
+            getAuthorizationByToken
+          );
+
+          email_value_node.value = '';
+        }, 500);
+      }
+    }
+  } else {
     authorization_email_submit.removeEventListener(
       'click',
       sendTokenRequestByEmail
     );
+
+    addClass(email_value_node, 'input_failed');
+
+    setTimeout(() => {
+      removeClass(email_value_node, 'input_failed');
+    }, 1500);
 
     setTimeout(() => {
       authorization_email_submit.addEventListener(
@@ -335,36 +452,7 @@ async function sendTokenRequestByEmail() {
       );
     }, 2500);
 
-    showModalNotification(
-      'error',
-      'authorization',
-      'Введен некорректный e-mail'
-    );
-    return false;
-  } else {
-    modal_loader.remove('hidden');
-
-    let responce = await request.post(url, user_email);
-
-    if (responce.email) {
-      hideEmailInput();
-
-      modal_loader.add('hidden');
-
-      const token_setter_condition =
-        document.getElementById('token_setter').classList;
-
-      token_setter_condition.remove('hidden');
-      token_setter_condition.add('modals_entrance');
-
-      setTimeout(() => {
-        token_setter_condition.remove('modals_entrance');
-        authorization_token_submit.addEventListener(
-          'click',
-          getAuthorizationByToken
-        );
-      }, 500);
-    }
+    showModalNotification('error', 'authorization', 'Введите e-mail');
   }
 }
 
@@ -372,24 +460,61 @@ function getAuthorizationByToken() {
   const token_value_node = document.getElementById('authorization_token');
   const token_value = token_value_node.value;
 
-  token_value_node.value = '';
+  if (token_value) {
+    if (token_value && token_value.length > 50) {
+      Cookies.set('token', token_value, { expires: 1 });
 
-  if (token_value && token_value.length > 50) {
-    Cookies.set('token', token_value, { expires: 1 });
+      addClass(token_value_node, 'input_completed');
 
-    showModalNotification(
-      'сompleted',
-      'authorization',
-      'Вы успешно авторизовались!'
-    );
+      setTimeout(() => {
+        removeClass(token_value_node, 'input_completed');
+      }, 2500);
+
+      showModalNotification(
+        'сompleted',
+        'authorization',
+        'Вы успешно авторизовались!'
+      );
+
+      setTimeout(() => {
+        token_value_node.value = '';
+        const authorization_modal = document.querySelector('.authorization');
+        hideModal(authorization_modal);
+
+        initializeProfile();
+      }, 2500);
+    } else {
+      addClass(token_value_node, 'input_failed');
+
+      setTimeout(() => {
+        removeClass(token_value_node, 'input_failed');
+      }, 1500);
+
+      authorization_token_submit.removeEventListener(
+        'click',
+        getAuthorizationByToken
+      );
+
+      setTimeout(() => {
+        authorization_token_submit.addEventListener(
+          'click',
+          getAuthorizationByToken
+        );
+      }, 2500);
+
+      showModalNotification(
+        'error',
+        'authorization',
+        'Введите корректный токен'
+      );
+    }
+  } else {
+    addClass(token_value_node, 'input_failed');
 
     setTimeout(() => {
-      const authorization_modal = document.querySelector('.authorization');
-      hideModal(authorization_modal);
+      removeClass(token_value_node, 'input_failed');
+    }, 1500);
 
-      initializeProfile();
-    }, 2500);
-  } else {
     authorization_token_submit.removeEventListener(
       'click',
       getAuthorizationByToken
@@ -402,7 +527,7 @@ function getAuthorizationByToken() {
       );
     }, 2500);
 
-    showModalNotification('error', 'authorization', 'Введите корректный токен');
+    showModalNotification('error', 'authorization', 'Введите токен');
   }
 }
 
