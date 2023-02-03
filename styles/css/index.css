@@ -1071,6 +1071,10 @@ body {
   cursor: pointer;
 }
 
+.chat-interface__messages-group-container {
+  width: 100%;
+}
+
 .emoji-picker {
   position: absolute;
   right: 0;
