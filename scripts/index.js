@@ -9,6 +9,7 @@ import {
   isThisYear,
   isThisWeek,
 } from 'date-fns';
+import { areIntervalsOverlappingWithOptions } from 'date-fns/fp';
 import 'emoji-picker-element';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import Cookies from 'js-cookie';
@@ -626,7 +627,7 @@ const chat_interface_block = document.querySelector('.chat-interface');
 
 test_chat.addEventListener('click', showThisChat);
 
-function showThisChat() {
+async function showThisChat() {
   const this_chat = document.querySelector('.chat:hover');
 
   const chat_name = this_chat.querySelector('.chat__name').textContent;
@@ -637,153 +638,67 @@ function showThisChat() {
     chat_interface_block.classList.remove('hidden');
   }
 
-  getMessageHistoryAndConnectWs(chat_name);
+  await getMessageHistoryAndConnectWs(chat_name);
+
+  initRender(current_rendering_group);
 }
 
 // Получение, создание, работа с сообщениями
 class Message {
   constructor(options) {
-    (this.id = options.id),
-      (this.author = {
-        name: options.author.author,
-        picture: options.author.picture,
-        email: options.author.email,
-      }),
-      (this.date = options.date),
-      (this.text = options.text);
+    this.createdAt = options.createdAt;
+    this.user = {
+      email: options.user.email,
+      name: options.user.name,
+      picture: options.user.picture,
+    };
+    this.text = options.text;
   }
 
-  renderMessage(is_mine, first_message_of_group, previous_author) {
-    const message_template = document.getElementById('message');
-    const messages_block = document.querySelector(
-      '.chat-interface__messages-block'
-    );
-
-    const this_message = message_template.content.cloneNode(true);
-
-    const this_message_block = this_message.querySelector('.message');
-
-    const this_message_author_block =
-      this_message.querySelector('.message__author');
-
-    const this_message_author = this_message.querySelector(
-      '.message__author-name'
-    );
-    const this_message_author_img = this_message.querySelector(
-      '.message__author-img'
-    );
-    const this_message_text = this_message.querySelector('.message__text');
-    const this_message_date = this_message.querySelector('.message__date');
-
-    let date = parseISO(this.date);
-
-    this_message_author.innerHTML = this.author.name;
-    this_message_text.innerHTML = this.text;
-
-    this_message_date.innerHTML = format(date, 'kk:mm');
-
-    this_message_author_img.setAttribute('src', this.author.picture);
-
-    this_message_block.classList.add(`${this.author.email}`);
-
-    if (is_mine === true) {
-      this_message.querySelector('.message').classList.add('message_outgoing');
-      this_message_author.innerHTML = 'Вы';
-    }
-
-    if (previous_author === this.author.name) {
-      const parent = this_message_author_block.parentNode;
-      parent.removeChild(this_message_author_block);
-    }
-
-    if (first_message_of_group === true) {
-      const messages_group_template = document.getElementById('messages_group');
-
-      const label_block = messages_group_template.content.cloneNode(true);
-      const label_block_text = label_block.querySelector('p');
-
-      const target = format(date, 'dd-MM-yyyy');
-      const is_exist = messages_buffer.includes(target);
-
-      if (!is_exist) {
-        messages_buffer.push(target);
-
-        let label_date;
-
-        if (isToday(date) === true) {
-          label_date = 'Today';
-        } else {
-          if (isYesterday(date) === true) {
-            label_date = 'Yesterday';
-          } else {
-            if (isThisWeek(date) === true) {
-              label_date = format(date, 'EEEE');
-            } else {
-              if (isThisYear(date) === true) {
-                label_date = format(date, 'dd LLLL');
-              } else {
-                label_date = format(date, 'dd LLLL yyyy');
-              }
-            }
-          }
-        }
-
-        label_block_text.innerHTML = label_date;
-
-        setTimeout(() => {
-          messages_block.prepend(label_block);
-        }, 0);
-      }
-    }
-
-    setTimeout(() => {
-      messages_block.prepend(this_message);
-    }, 0);
+  async render_type_1(group_block) {
+    await messageRender(this, 1, group_block);
   }
 
-  changeLastMessageOfChat() {
-    const last_message_author_img = document.querySelector(
-      '.chat__last-message-author'
-    );
-    const last_message_text = document.querySelector(
-      '.chat__last-message-text'
-    );
-    const last_message_date = document.querySelector(
-      '.chat__last-message-date'
-    );
+  async render_type_2(group_block) {
+    await messageRender(this, 2, group_block);
+  }
 
-    last_message_author_img.setAttribute('src', this.author.picture);
-    let text = this.text;
-    if (text.length > 15) {
-      text = `${text.slice(0, 15)}...`;
-    }
+  async render_type_3(group_block) {
+    await messageRender(this, 3, group_block);
+  }
 
-    last_message_text.innerHTML = text;
-    let date = parseISO(this.date);
-    let formatted_date;
-    if (isToday(date) === true) {
-      formatted_date = format(date, 'kk:mm');
-    } else {
-      if (isYesterday(date) === true) {
-        formatted_date = `Yesterday, ${format(date, 'kk:mm')}`;
-      } else {
-        if (isThisWeek(date) === true) {
-          formatted_date = `${format(date, 'EEEE')},${format(date, 'kk:mm')}`;
-        } else {
-          if (isThisYear(date) === true) {
-            formatted_date = format(date, 'dd LLLL, kk:mm');
-          } else {
-            formatted_date = format(date, 'dd LLLL yyyy, kk:mm');
-          }
-        }
-      }
-    }
+  async render_type_4(group_block) {
+    await messageRender(this, 4, group_block);
+  }
 
-    last_message_date.innerHTML = formatted_date;
+  async render_type_5(group_block) {
+    await messageRender(this, 5, group_block);
+  }
+
+  async render_type_6(group_block) {
+    await messageRender(this, 6, group_block);
+  }
+
+  async render_type_7(group_block) {
+    await messageRender(this, 7, group_block);
+  }
+
+  async render_type_8(group_block) {
+    await messageRender(this, 8, group_block);
   }
 }
 
 const messages_buffer = [];
+const current_rendering_group = {
+  props: {
+    date: null,
+    last_rendered_message_index: null,
+  },
+  messages: [],
+};
+
+let messages_page_counter = 1;
+let messages_date_counter = null;
 
 const new_message_input = document.getElementById('new_message_input');
 const new_message_submit = document.getElementById('new_message_submit');
@@ -813,68 +728,17 @@ async function getMessageHistory(chat_name) {
     if (!message_history.length) {
       empty_chat_warning.classList.remove('hidden');
     }
-    const sorted_array = groupMessagesByDate(message_history);
+    await groupMessagesByDate(message_history);
 
-    recursive_group_render(sorted_array);
+    messages_date_counter = [messages_buffer.length - 1];
+
+    await switchMessagesGroup(messages_date_counter);
   }
 }
 
-async function getMessageHistoryAndConnectWs(chat_name) {
-  await getMessageHistory(chat_name);
-
-  (me.socket = new WebSocket(`ws://edu.strada.one/websockets?${me.token}`)),
-    (me.socket.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-
-      console.log(`Получено новое сообщение от ${data.user.email}`);
-
-      const arr = [
-        {
-          id: data._id,
-          user: { email: data.user.email, name: data.user.name },
-          text: data.text,
-          createdAt: data.createdAt,
-        },
-      ];
-
-      const last_message = document.querySelector('.message');
-      const last_author = last_message.querySelector('.message__author');
-
-      if (
-        last_author &&
-        last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return recursive_render(arr, 0, data.user.name);
-      }
-
-      if (
-        last_author &&
-        !last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return recursive_render(arr, 0, null);
-      }
-
-      if (
-        !last_author &&
-        last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return recursive_render(arr, 0, data.user.name);
-      }
-
-      if (
-        !last_author &&
-        !last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return recursive_render(arr, 0, null);
-      }
-    });
-}
-
-function groupMessagesByDate(messages_array) {
-  let groups = [];
-
+async function groupMessagesByDate(messages_array) {
   for (let element of messages_array) {
-    let existingGroups = groups.filter(
+    let existingGroups = messages_buffer.filter(
       (group) => group.date == format(parseISO(element.createdAt), 'dd-MM-yyyy')
     );
     if (existingGroups.length > 0) {
@@ -885,91 +749,388 @@ function groupMessagesByDate(messages_array) {
         messages: [element],
       };
 
-      groups.push(newGroup);
+      messages_buffer.push(newGroup);
     }
-  }
-
-  return groups;
-}
-
-async function recursive_group_render(group_array) {
-  if (Array.isArray(group_array)) {
-    group_array.forEach((item) => {
-      return recursive_group_render(item);
-    });
-  } else {
-    if (group_array) {
-      const group = group_array.messages;
-      const date = group_array.date;
-
-      return await recursive_render(group, 0, null);
-    }
-
-    return await recursive_group_render();
   }
 }
 
-async function recursive_render(
-  message_array,
-  message_number,
-  previous_author
-) {
-  if (message_number === message_array.length) {
-    return;
-  } else {
-    const current_elem = message_array[message_number];
+async function switchMessagesGroup(array_index) {
+  current_rendering_group.messages.splice(
+    0,
+    ...messages_buffer[array_index].messages
+  );
+  current_rendering_group.props.date = messages_buffer[array_index].date;
 
-    const id = current_elem._id;
-    const author = {
-      name: current_elem.user.name,
-      picture: 'https://www.hallmarktour.com/img/profile-img.jpg',
+  current_rendering_group.props.last_rendered_message_index =
+    messages_buffer[array_index].messages.length - 1;
+}
+
+async function initRender(data) {
+  let i = data.props.last_rendered_message_index;
+  let j = data.props.last_rendered_message_index - 20;
+
+  const messages_container = document.createElement('div');
+  messages_container.className = 'chat-interface__messages-group-container';
+  messages_container.id = messages_page_counter;
+
+  const messages = [];
+  let next_page_trigger_setting_allow = null;
+  let last_message_of_group_check = null;
+
+  if (j < 0) {
+    const page = data.messages.slice(0, i);
+    next_page_trigger_setting_allow = false;
+    last_message_of_group_check = page.length - 1;
+    messages.push(...page);
+  } else {
+    const page = data.messages.slice(j, i);
+    next_page_trigger_setting_allow = true;
+    messages.push(...page);
+  }
+
+  messages.forEach(async (item) => {
+    const message = item;
+
+    const options = {
+      createdAt: item.createdAt,
+      user: {
+        email: item.user.email,
+        name: item.user.name,
+        picture: 'https://www.hallmarktour.com/img/profile-img.jpg',
+      },
+      text: item.text,
     };
-    const text = current_elem.text;
-    const email = current_elem.user.email;
 
-    const date = current_elem.createdAt;
+    const index_of_item = messages.indexOf(item);
 
-    const new_message = new Message({
-      id: id,
-      author: { author: author.name, picture: author.picture, email: email },
-      date: date,
-      text: text,
-    });
+    const new_message = new Message(options);
 
-    const last_author = previous_author;
+    const email_check = new_message.user.email === me.email;
 
-    if (email === me.email) {
-      new_message.author.picture = me.picture;
-
-      if (message_number === 0) {
-        new_message.renderMessage(true, true, last_author);
+    if (index_of_item === 0) {
+      if (index_of_item === last_message_of_group_check) {
+        if (email_check === true) {
+          return await new_message.render_type_7(messages_container);
+        }
+        if (email_check === false) {
+          return await new_message.render_type_8(messages_container);
+        }
       } else {
-        previous_author = author.name;
-        new_message.renderMessage(true, false, last_author);
+        if (email_check === true) {
+          return await new_message.render_type_1(messages_container);
+        }
+        if (email_check === false) {
+          return await new_message.render_type_2(messages_container);
+        }
       }
     } else {
-      if (message_number === 0) {
-        new_message.renderMessage(false, true, last_author);
+      if (index_of_item === last_message_of_group_check) {
+        if (email_check === true) {
+          return await new_message.render_type_7(messages_container);
+        }
+        if (email_check === false) {
+          return await new_message.render_type_8(messages_container);
+        }
       } else {
-        new_message.renderMessage(false, false, last_author);
+        const last_message = messages_container.querySelector(
+          '.message:nth-last-child(1)'
+        );
+
+        const last_author_check = last_message.classList.contains(
+          new_message.user.email
+        );
+
+        if (email_check === true && last_author_check === true) {
+          return await new_message.render_type_3(messages_container);
+        }
+
+        if (email_check === true && last_author_check === false) {
+          return await new_message.render_type_4(messages_container);
+        }
+
+        if (email_check === false && last_author_check === true) {
+          return await new_message.render_type_5(messages_container);
+        }
+
+        if (email_check === false && last_author_check === false) {
+          return await new_message.render_type_6(messages_container);
+        }
+      }
+    }
+  });
+
+  const relative_elem = document.querySelector(
+    '.chat-interface__messages-block'
+  );
+
+  relative_elem.append(messages_container);
+  if (next_page_trigger_setting_allow === true) {
+    setNextPageTrigger();
+  }
+
+  return (
+    (data.props.last_rendered_message_index = j), (messages_page_counter += 1)
+  );
+}
+
+function setNextPageTrigger() {
+  const options = {
+    root: document.querySelector('.chat-interface__messages-block'),
+    rootMargin: '0px',
+    threshold: 1,
+  };
+
+  const observer = new IntersectionObserver(obs_fnc, options);
+
+  const target = document.querySelector('.trigger');
+
+  setTimeout(() => {
+    observer.observe(target);
+  }, 100);
+
+  function obs_fnc(entries, observer) {
+    entries.forEach((entry) => {
+      const { target, isIntersecting } = entry;
+
+      if (isIntersecting) {
+        observer.unobserve(entry.target);
+        removeClass(target, 'trigger');
+
+        setTimeout(() => {
+          initRender(current_rendering_group);
+        }, 0);
+
+        console.log(`Page ${messages_page_counter} is loaded`);
+      }
+    });
+  }
+}
+
+async function messageRender(data, type, group_block_link) {
+  const message_template = document.getElementById('message');
+
+  const this_message = message_template.content.cloneNode(true);
+
+  const this_message_block = this_message.querySelector('.message');
+
+  const this_message_author_block =
+    this_message.querySelector('.message__author');
+
+  const this_message_author = this_message.querySelector(
+    '.message__author-name'
+  );
+  const this_message_author_img = this_message.querySelector(
+    '.message__author-img'
+  );
+  const this_message_text = this_message.querySelector('.message__text');
+  const this_message_date = this_message.querySelector('.message__date');
+
+  this_message_author.innerText = data.user.name;
+  this_message_text.innerText = data.text;
+  this_message_date.innerText = format(parseISO(data.createdAt), 'kk:mm');
+  this_message_author_img.setAttribute('src', data.user.picture);
+
+  addClass(this_message_block, data.user.email);
+
+  if (type === 1 || type === 3 || type === 4 || type === 7) {
+    addClass(this_message_block, 'message_outgoing');
+  }
+
+  if (type === 1 || type === 2) {
+    addClass(this_message_block, 'trigger');
+  }
+
+  if (type === 1 || type === 4) {
+    this_message_author_img.setAttribute('src', me.picture);
+    this_message_author.innerText = 'Вы';
+  }
+
+  if (type === 5 || type === 3) {
+    this_message_author_block.remove();
+  }
+
+  if (type === 7 || type === 8) {
+    const messages_group_template = document.getElementById('messages_group');
+
+    const label_block = messages_group_template.content.cloneNode(true);
+    const label_block_text = label_block.querySelector('p');
+
+    const date = parseISO(data.createdAt);
+    let label_date;
+
+    if (isToday(date) === true) {
+      label_date = 'Today';
+    } else {
+      if (isYesterday(date) === true) {
+        label_date = 'Yesterday';
+      } else {
+        if (isThisWeek(date) === true) {
+          label_date = format(date, 'EEEE');
+        } else {
+          if (isThisYear(date) === true) {
+            label_date = format(date, 'dd LLLL');
+          } else {
+            label_date = format(date, 'dd LLLL yyyy');
+          }
+        }
       }
     }
 
-    if (message_number === message_array.length - 1) {
-      new_message.changeLastMessageOfChat(true);
+    label_block_text.innerHTML = label_date;
+
+    if (messages_date_counter > 0) {
+      messages_date_counter -= 1;
+
+      group_block_link.append(this_message_block),
+        setTimeout(() => {
+          group_block_link.prepend(label_block);
+        }, 200);
+
+      setTimeout(() => {
+        const options = {
+          root: document.querySelector('.chat-interface__messages-block'),
+          rootMargin: '0px',
+          threshold: 1,
+        };
+
+        const observer = new IntersectionObserver(obs_fnc, options);
+
+        const target = document.querySelector('.chat-interface__date-block');
+
+        setTimeout(() => {
+          observer.observe(target);
+        }, 100);
+
+        function obs_fnc(entries, observer) {
+          entries.forEach((entry) => {
+            const { target, isIntersecting } = entry;
+
+            if (isIntersecting) {
+              observer.unobserve(entry.target);
+
+              switchMessagesGroup(messages_date_counter);
+              setTimeout(() => {
+                console.log('Dates array switched');
+                initRender(current_rendering_group);
+              }, 100);
+            }
+          });
+        }
+      }, 500);
+    } else {
+      return (
+        group_block_link.append(this_message_block),
+        group_block_link.prepend(label_block)
+      );
     }
-
-    previous_author = author.name;
-
-    message_number += 1;
-
-    return await recursive_render(
-      message_array,
-      message_number,
-      previous_author
-    );
   }
+
+  group_block_link.append(this_message_block);
+
+  const last_message_author_img = document.querySelector(
+    '.chat__last-message-author'
+  );
+  const last_message_text = document.querySelector('.chat__last-message-text');
+  const last_message_date = document.querySelector('.chat__last-message-date');
+
+  last_message_author_img.setAttribute('src', data.user.picture);
+  let text = data.text;
+  if (text.length > 15) {
+    text = `${text.slice(0, 15)}...`;
+  }
+
+  last_message_text.innerHTML = text;
+  let date = parseISO(data.createdAt);
+  let formatted_date;
+  if (isToday(date) === true) {
+    formatted_date = format(date, 'kk:mm');
+  } else {
+    if (isYesterday(date) === true) {
+      formatted_date = `Yesterday, ${format(date, 'kk:mm')}`;
+    } else {
+      if (isThisWeek(date) === true) {
+        formatted_date = `${format(date, 'EEEE')},${format(date, 'kk:mm')}`;
+      } else {
+        if (isThisYear(date) === true) {
+          formatted_date = format(date, 'dd LLLL, kk:mm');
+        } else {
+          formatted_date = format(date, 'dd LLLL yyyy, kk:mm');
+        }
+      }
+    }
+  }
+
+  last_message_date.innerHTML = formatted_date;
 }
+
+async function getMessageHistoryAndConnectWs(chat_name) {
+  await getMessageHistory(chat_name);
+
+  (me.socket = new WebSocket(`wss://edu.strada.one/websockets?${me.token}`)),
+    (me.socket.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+
+      console.log(`Получено новое сообщение от ${data.user.email}`);
+
+      const item = data;
+
+      const options = {
+        createdAt: item.createdAt,
+        user: {
+          email: item.user.email,
+          name: item.user.name,
+          picture: 'https://www.hallmarktour.com/img/profile-img.jpg',
+        },
+        text: item.text,
+      };
+
+      const new_message = new Message(options);
+
+      const first_messages_block = document.getElementById('1');
+
+      const last_message = first_messages_block.querySelector(
+        '.message:nth-last-child(1)'
+      );
+      const last_author = last_message.querySelector('.message__author');
+
+      const check = last_message.classList.contains(`${data.user.email}`);
+      const check_me = last_message.classList.contains(`${me.email}`);
+
+      if (last_author && check) {
+        if (check_me) {
+          return new_message.render_type_3(first_messages_block);
+        } else {
+          return new_message.render_type_5(first_messages_block);
+        }
+      }
+
+      if (last_author && !check) {
+        if (check_me) {
+          return new_message.render_type_4(first_messages_block);
+        } else {
+          return new_message.render_type_6(first_messages_block);
+        }
+      }
+
+      if (!last_author && check) {
+        if (check_me) {
+          return new_message.render_type_3(first_messages_block);
+        } else {
+          return new_message.render_type_5(first_messages_block);
+        }
+      }
+
+      if (!last_author && !check) {
+        if (check_me) {
+          return new_message.render_type_4(first_messages_block);
+        } else {
+          return new_message.render_type_6(first_messages_block);
+        }
+      }
+    });
+}
+
+//
 
 // Меню с емодзи
 
