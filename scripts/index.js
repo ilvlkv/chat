@@ -641,7 +641,6 @@ async function showThisChat() {
   await getMessageHistoryAndConnectWs(chat_name);
 
   initRender(current_rendering_group);
-  console.log(current_rendering_group);
 }
 
 // Получение, создание, работа с сообщениями
@@ -763,30 +762,34 @@ async function switchMessagesGroup(array_index) {
   current_rendering_group.props.date = messages_buffer[array_index].date;
 
   current_rendering_group.props.last_rendered_message_index =
-    messages_buffer[array_index].messages.length - 2;
+    messages_buffer[array_index].messages.length - 1;
 }
 
 async function initRender(data) {
   let i = data.props.last_rendered_message_index;
   let j = data.props.last_rendered_message_index - 20;
 
-  const check = i;
-
   const messages_container = document.createElement('div');
   messages_container.className = 'chat-interface__messages-group-container';
   messages_container.id = messages_page_counter;
 
-  for (i; i >= j; i--) {
-    if (i === -1) {
-      const relative_elem = document.querySelector(
-        '.chat-interface__messages-block'
-      );
+  const messages = [];
+  let next_page_trigger_setting_allow = null;
+  let last_message_of_group_check = null;
 
-      relative_elem.append(messages_container);
-      return;
-    }
+  if (j < 0) {
+    const page = data.messages.slice(0, i);
+    next_page_trigger_setting_allow = false;
+    last_message_of_group_check = page.length - 1;
+    messages.push(...page);
+  } else {
+    const page = data.messages.slice(j, i);
+    next_page_trigger_setting_allow = true;
+    messages.push(...page);
+  }
 
-    const item = data.messages[i];
+  messages.forEach(async (item) => {
+    const message = item;
 
     const options = {
       createdAt: item.createdAt,
@@ -798,107 +801,112 @@ async function initRender(data) {
       text: item.text,
     };
 
-    const new_message = new Message(options);
+    const index_of_item = messages.indexOf(item);
 
-    const last_message_check = i === 0;
+    const new_message = new Message(options);
 
     const email_check = new_message.user.email === me.email;
 
-    if (check === i) {
-      if (last_message_check === false) {
+    if (index_of_item === 0) {
+      if (index_of_item === last_message_of_group_check) {
         if (email_check === true) {
-          await new_message.render_type_1(messages_container);
+          return await new_message.render_type_7(messages_container);
         }
         if (email_check === false) {
-          await new_message.render_type_2(messages_container);
+          return await new_message.render_type_8(messages_container);
         }
       } else {
         if (email_check === true) {
-          await new_message.render_type_7(messages_container);
+          return await new_message.render_type_1(messages_container);
         }
         if (email_check === false) {
-          await new_message.render_type_8(messages_container);
+          return await new_message.render_type_2(messages_container);
         }
       }
     } else {
-      const last_author = messages_container.querySelector('.message');
+      if (index_of_item === last_message_of_group_check) {
+        if (email_check === true) {
+          return await new_message.render_type_7(messages_container);
+        }
+        if (email_check === false) {
+          return await new_message.render_type_8(messages_container);
+        }
+      } else {
+        const last_message = messages_container.querySelector(
+          '.message:nth-last-child(1)'
+        );
 
-      if (last_message_check === false) {
-        const last_author_check = last_author.classList.contains(
+        const last_author_check = last_message.classList.contains(
           new_message.user.email
         );
 
         if (email_check === true && last_author_check === true) {
-          await new_message.render_type_3(messages_container);
+          return await new_message.render_type_3(messages_container);
         }
 
         if (email_check === true && last_author_check === false) {
-          await new_message.render_type_4(messages_container);
+          return await new_message.render_type_4(messages_container);
         }
 
         if (email_check === false && last_author_check === true) {
-          await new_message.render_type_5(messages_container);
+          return await new_message.render_type_5(messages_container);
         }
 
         if (email_check === false && last_author_check === false) {
-          await new_message.render_type_6(messages_container);
-        }
-      } else {
-        if (email_check === true) {
-          await new_message.render_type_7(messages_container);
-        }
-        if (email_check === false) {
-          await new_message.render_type_8(messages_container);
+          return await new_message.render_type_6(messages_container);
         }
       }
     }
-
-    if (i == j) {
-      const options = {
-        root: document.querySelector('.chat-interface__messages-block'),
-        rootMargin: '0px',
-        threshold: 1,
-      };
-
-      const observer = new IntersectionObserver(obs_fnc, options);
-
-      const target = messages_container.querySelector('.message');
-
-      setTimeout(() => {
-        observer.observe(target);
-      }, 100);
-
-      function obs_fnc(entries, observer) {
-        entries.forEach((entry) => {
-          const { target, isIntersecting } = entry;
-
-          if (isIntersecting) {
-            observer.unobserve(entry.target);
-
-            setTimeout(() => {
-              initRender(current_rendering_group);
-            }, 100);
-
-            console.log(`Page ${messages_page_counter} is loaded`);
-          }
-        });
-      }
-    }
-  }
+  });
 
   const relative_elem = document.querySelector(
     '.chat-interface__messages-block'
   );
 
+  relative_elem.append(messages_container);
+  if (next_page_trigger_setting_allow === true) {
+    setNextPageTrigger();
+  }
+
   return (
-    (data.props.last_rendered_message_index = i),
-    relative_elem.append(messages_container),
-    (messages_page_counter += 1)
+    (data.props.last_rendered_message_index = j), (messages_page_counter += 1)
   );
 }
 
+function setNextPageTrigger() {
+  const options = {
+    root: document.querySelector('.chat-interface__messages-block'),
+    rootMargin: '0px',
+    threshold: 1,
+  };
+
+  const observer = new IntersectionObserver(obs_fnc, options);
+
+  const target = document.querySelector('.trigger');
+
+  setTimeout(() => {
+    observer.observe(target);
+  }, 100);
+
+  function obs_fnc(entries, observer) {
+    entries.forEach((entry) => {
+      const { target, isIntersecting } = entry;
+
+      if (isIntersecting) {
+        observer.unobserve(entry.target);
+        removeClass(target, 'trigger');
+
+        setTimeout(() => {
+          initRender(current_rendering_group);
+        }, 0);
+
+        console.log(`Page ${messages_page_counter} is loaded`);
+      }
+    });
+  }
+}
+
 async function messageRender(data, type, group_block_link) {
-  console.log(type);
   const message_template = document.getElementById('message');
 
   const this_message = message_template.content.cloneNode(true);
@@ -924,9 +932,17 @@ async function messageRender(data, type, group_block_link) {
 
   addClass(this_message_block, data.user.email);
 
-  if (type === 1 || type === 4) {
+  if (type === 1 || type === 3 || type === 4 || type === 7) {
     addClass(this_message_block, 'message_outgoing');
+  }
+
+  if (type === 1 || type === 2) {
+    addClass(this_message_block, 'trigger');
+  }
+
+  if (type === 1 || type === 4) {
     this_message_author_img.setAttribute('src', me.picture);
+    this_message_author.innerText = 'Вы';
   }
 
   if (type === 5 || type === 3) {
@@ -962,10 +978,10 @@ async function messageRender(data, type, group_block_link) {
 
     label_block_text.innerHTML = label_date;
 
-    if (messages_date_counter >= 0) {
+    if (messages_date_counter > 0) {
       messages_date_counter -= 1;
 
-      group_block_link.prepend(this_message_block),
+      group_block_link.append(this_message_block),
         setTimeout(() => {
           group_block_link.prepend(label_block);
         }, 200);
@@ -1003,13 +1019,13 @@ async function messageRender(data, type, group_block_link) {
       }, 500);
     } else {
       return (
-        group_block_link.prepend(this_message_block),
+        group_block_link.append(this_message_block),
         group_block_link.prepend(label_block)
       );
     }
   }
 
-  group_block_link.prepend(this_message_block);
+  group_block_link.append(this_message_block);
 
   const last_message_author_img = document.querySelector(
     '.chat__last-message-author'
@@ -1076,32 +1092,40 @@ async function getMessageHistoryAndConnectWs(chat_name) {
         '.message:nth-last-child(1)'
       );
       const last_author = last_message.querySelector('.message__author');
-      if (
-        last_author &&
-        last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return new_message.render_type_5(first_messages_block);
+
+      const check = last_message.classList.contains(`${data.user.email}`);
+      const check_me = last_message.classList.contains(`${me.email}`);
+
+      if (last_author && check) {
+        if (check_me) {
+          return new_message.render_type_3(first_messages_block);
+        } else {
+          return new_message.render_type_5(first_messages_block);
+        }
       }
 
-      if (
-        last_author &&
-        !last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return new_message.render_type_6(first_messages_block);
+      if (last_author && !check) {
+        if (check_me) {
+          return new_message.render_type_4(first_messages_block);
+        } else {
+          return new_message.render_type_6(first_messages_block);
+        }
       }
 
-      if (
-        !last_author &&
-        last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return new_message.render_type_5(first_messages_block);
+      if (!last_author && check) {
+        if (check_me) {
+          return new_message.render_type_3(first_messages_block);
+        } else {
+          return new_message.render_type_5(first_messages_block);
+        }
       }
 
-      if (
-        !last_author &&
-        !last_message.classList.contains(`${data.user.email}`)
-      ) {
-        return new_message.render_type_6(first_messages_block);
+      if (!last_author && !check) {
+        if (check_me) {
+          return new_message.render_type_4(first_messages_block);
+        } else {
+          return new_message.render_type_6(first_messages_block);
+        }
       }
     });
 }
